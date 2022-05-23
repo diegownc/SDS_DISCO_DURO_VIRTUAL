@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"login/argon2sds"
 )
 
 //Conexión con base de datos
@@ -14,19 +15,12 @@ const (
 	dbname   = "sds"
 )
 
-type PasswordConfig struct {
-	time    uint32
-	memory  uint32
-	threads uint8
-	keyLen  uint32
-}
-
 func main() {
 	//Descomentar para logear a un usuario
-	//LoginUsuario("usuPrueba123", "usuContra123")
+	LoginUsuario("usuPrueba123", "usuContra123")
 
 	//Descomentar para registrar un nuevo usuario
-	//RegistroUsuario("usuPrueba123", "usuContra123")
+	//RegistroUsuario("usuPrueba1234", "usuContra1234")
 }
 
 //#######################################################################################################
@@ -36,12 +30,12 @@ func main() {
 func comprobarUsuario(username string, password string, hash_username string, hash_pass string) bool {
 	var res bool = true
 
-	match, err := CompareHash(username, hash_username)
+	match, err := argon2sds.CompareHash(username, hash_username)
 	if !match || err != nil {
 		res = false
 	}
 
-	match, err = CompareHash(password, hash_pass)
+	match, err = argon2sds.CompareHash(password, hash_pass)
 	if !match || err != nil {
 		res = false
 	}
@@ -78,6 +72,7 @@ func LoginUsuario(nombreUsuario string, contraUsuario string) {
 
 	if existeUsuario {
 		//ENVIAR TOKEN AL USUARIO
+		fmt.Println("Credenciales correctas")
 	} else {
 		fmt.Println("Crendenciales incorrectas")
 	}
@@ -112,21 +107,15 @@ func RegistroUsuario(nombreUsuario string, contraUsuario string) {
 
 	//¿El usuario existe?
 	if !existeUsuario {
-		config := &PasswordConfig{
-			time:    1,
-			memory:  64 * 1024,
-			threads: 4,
-			keyLen:  32,
-		}
 
-		hash_username, err := GenerateHash(config, nombreUsuario)
+		hash_username, err := argon2sds.GenerateHash(nombreUsuario)
 		checkError(err)
 
-		hash_pass, err := GenerateHash(config, contraUsuario)
+		hash_pass, err := argon2sds.GenerateHash(contraUsuario)
 		checkError(err)
 
-		sqlStatement := `INSERT INTO users (username, password, idfolder) VALUES ($1, $2, $3)`
-		_, err = db.Exec(sqlStatement, hash_username, hash_pass, "testing5")
+		sqlStatement := `INSERT INTO users (username, password) VALUES ($1, $2)`
+		_, err = db.Exec(sqlStatement, hash_username, hash_pass)
 
 		checkError(err)
 		fmt.Println("\nSe ha añadido un nuevo usuario a la BD!")
