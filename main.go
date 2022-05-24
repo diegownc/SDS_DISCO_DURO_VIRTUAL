@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	dbDriver = "postgres"
-	dbSource = "postgresql://root:secret@localhost:5432/sds?sslmode=disable"
+	dbDriver      = "postgres"
+	dbSource      = "postgresql://root:secret@localhost:5432/sds?sslmode=disable"
+	serverAddress = "0.0.0.0:8080"
 )
 
 func main() {
@@ -21,5 +22,8 @@ func main() {
 	store := db.NewStore(conn)
 	server := api.NewServer(store)
 
-	err = server.Start()
+	err = server.Start(serverAddress)
+	if err != nil {
+		log.Fatal("Cannot start server:", err)
+	}
 }
