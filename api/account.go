@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	db "github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/db"
@@ -9,8 +8,25 @@ import (
 )
 
 type loginRequest struct {
-	username string `json:"username" binding:"required "`
-	password string `json:"password" binding:"required"`
+	User     string `form:"username" json:"username" xml:"username" binding:"required"`
+	Password string `form:"password" json:"password" xml:"password" binding:"required"`
+}
+
+func (server *Server) registrar(ctx *gin.Context) {
+	var req loginRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	res := db.RegistroUsuario(req.User, req.Password)
+
+	if res {
+		ctx.JSON(http.StatusOK, "Te has registrado correctamente")
+	} else {
+		ctx.JSON(http.StatusOK, "Ha ocurrido un error")
+	}
+
 }
 
 func (server *Server) login(ctx *gin.Context) {
@@ -20,20 +36,11 @@ func (server *Server) login(ctx *gin.Context) {
 		return
 	}
 
-	arg := db.LoginParams{
-		Username: req.username,
-		Password: req.password,
+	res := db.LoginUsuario(req.User, req.Password)
+
+	if res {
+		ctx.JSON(http.StatusOK, "Credenciales correctas")
+	} else {
+		ctx.JSON(http.StatusOK, "Credenciales incorrectas")
 	}
-
-	res := db.LoginUsuario(arg.Username, arg.Password)
-
-	/*
-		if !res{
-			ctx.JSON(http.StatusInternalServerError, errorResponse((err)))
-			return
-		}
-
-		ctx.JSON(http.StatusOK, account)
-	*/
-	fmt.Println("El resultado es: ", res)
 }
