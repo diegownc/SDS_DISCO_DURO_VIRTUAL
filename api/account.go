@@ -8,13 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type createAccountRequest struct {
+type loginRequest struct {
 	username string `json:"username" binding:"required "`
 	password string `json:"password" binding:"required"`
 }
 
-func (server *Server) createAccount(ctx *gin.Context) {
-	var req createAccountRequest
+func (server *Server) login(ctx *gin.Context) {
+	var req loginRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
@@ -25,7 +25,7 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		Password: req.password,
 	}
 
-	res := db.RegistroUsuario(arg.Username, arg.Password)
+	res := db.LoginUsuario(arg.Username, arg.Password)
 
 	/*
 		if !res{

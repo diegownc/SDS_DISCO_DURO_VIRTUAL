@@ -12,7 +12,7 @@ func NewServer() *Server {
 	server := &Server{}
 	router := gin.Default()
 
-	router.POST("/accounts", server.createAccount)
+	router.POST("/login", server.login)
 
 	server.router = router
 	return server
