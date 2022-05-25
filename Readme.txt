@@ -1,6 +1,7 @@
 //Instalar postgre -> https://www.postgresql.org/download/linux/
 //Comandos para crear la base de datos:
 
+sudo su 
 su - postgres 
 
 psql
