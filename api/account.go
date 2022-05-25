@@ -1,14 +1,16 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
+	db "github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/db"
 	"github.com/gin-gonic/gin"
 )
 
 type createAccountRequest struct {
-	Owner    string `json:"owner" binding:"required, oneof=USD EUR"`
-	Currency string `json:"currency" binding:"required"`
+	username string `json:"username" binding:"required "`
+	password string `json:"password" binding:"required"`
 }
 
 func (server *Server) createAccount(ctx *gin.Context) {
@@ -18,18 +20,20 @@ func (server *Server) createAccount(ctx *gin.Context) {
 		return
 	}
 
-	arg := db.CreateAccountParams{
-		Owner:    req.Owner,
-		Currency: req.Currency,
-		Balance:  0,
+	arg := db.LoginParams{
+		Username: req.username,
+		Password: req.password,
 	}
 
-	account, err := server.store.CreateAccount(ctx, arg)
+	res := db.RegistroUsuario(arg.Username, arg.Password)
 
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse((err)))
-		return
-	}
+	/*
+		if !res{
+			ctx.JSON(http.StatusInternalServerError, errorResponse((err)))
+			return
+		}
 
-	ctx.JSON(http.StatusOK, account)
+		ctx.JSON(http.StatusOK, account)
+	*/
+	fmt.Println("El resultado es: ", res)
 }
