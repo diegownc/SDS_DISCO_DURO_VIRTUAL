@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 
+	"github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/api"
 	db "github.com/techschool/simplebank/db/sqlc"
 )
 
