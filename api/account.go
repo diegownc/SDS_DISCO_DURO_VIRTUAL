@@ -4,7 +4,7 @@ import (
 	"net/http"
  
 	"time"
-	token "github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/token"
+	 "github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/token"
 	db "github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/db"
 	"github.com/gin-gonic/gin"
 )
@@ -17,6 +17,7 @@ type loginRequest struct {
 }
 
 type loginResponse struct {
+	Result bool `json:"result"`
 	AccessToken string `json:"access_token"`
 }
 
@@ -46,7 +47,9 @@ func (server *Server) login(ctx *gin.Context) {
 
 	res := db.LoginUsuario(req.User, req.Password)
 
-	accessToken, err := token.CreateToken(
+	tokenMaker, err := token.NewJWTMaker("12345678123456781234567812345678")
+
+	accessToken, err := tokenMaker.CreateToken(
 		req.User,
 		AccessTokenDuration,
 	)
@@ -56,6 +59,7 @@ func (server *Server) login(ctx *gin.Context) {
  	} 
 
 	rsp := loginResponse{ 
+		Result : res,
 		AccessToken: accessToken,
 	} 
 	ctx.JSON(http.StatusOK, rsp)
