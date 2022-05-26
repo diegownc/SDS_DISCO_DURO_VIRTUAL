@@ -32,5 +32,5 @@ Pasos para ejecutar este programa
 -- Nos descargamos las dependencias
 go mod tidy
 
-go run Login.go
+go run main.go
 
