@@ -3,7 +3,12 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/token"
-)
+	"errors"
+	 
+	"net/http"
+	"strings"
+)	
+
 
 const (
 	authorizationHeaderKey = "authorization"
@@ -13,14 +18,14 @@ const (
 
 func authMiddleware( ) gin.HandlerFunc{
 	return func(ctx *gin.Context){
-		authorizationHeader _= ctx.GetHeader(authorizationHeaderKey)
+		authorizationHeader  := ctx.GetHeader(authorizationHeaderKey)
 		if len(authorizationHeader) == 0{
 			err := errors.New("Authorization header is not provided")
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errorResponse(err))
 			return 
 		}
 
-		fields .= strings.Fields(authorizationHeader)
+		fields := strings.Fields(authorizationHeader)
 		if len(fields) < 2 {
 			err := errors.New("Invalid authorization header format")
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errorResponse(err))
@@ -35,6 +40,9 @@ func authMiddleware( ) gin.HandlerFunc{
 		}
 
 		access_token := fields[1]
+
+		tokenMaker, err := token.NewJWTMaker("12345678123456781234567812345678")
+
 		payload, err := tokenMaker.VerifyToken(access_token)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errorResponse(err))

@@ -2,7 +2,7 @@ package api
 
 import (
 	"net/http"
- 
+ 	"fmt"
 	"time"
 	 "github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/token"
 	db "github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/db"
@@ -63,4 +63,10 @@ func (server *Server) login(ctx *gin.Context) {
 		AccessToken: accessToken,
 	} 
 	ctx.JSON(http.StatusOK, rsp)
+}
+
+func (server *Server) getUsers(ctx *gin.Context) {
+ 
+	fmt.Println("METODO QUE REQUIERE AUTENTIFICACION")
+
 }
