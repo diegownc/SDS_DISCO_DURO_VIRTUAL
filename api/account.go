@@ -2,15 +2,15 @@ package api
 
 import (
 	"net/http"
-
+ 
+	"time"
+	token "github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/token"
 	db "github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/db"
 	"github.com/gin-gonic/gin"
 )
 
-const{
-	AccessTokenDuration time.Duration("15m") 
-}
-
+const AccessTokenDuration = time.Duration(time.Minute)  
+   
 type loginRequest struct {
 	User     string `form:"username" json:"username" xml:"username" binding:"required"`
 	Password string `form:"password" json:"password" xml:"password" binding:"required"`
@@ -46,7 +46,7 @@ func (server *Server) login(ctx *gin.Context) {
 
 	res := db.LoginUsuario(req.User, req.Password)
 
-	accessToken, err := server.tokenMaker.CreateToken(
+	accessToken, err := token.CreateToken(
 		req.User,
 		AccessTokenDuration,
 	)
@@ -55,8 +55,8 @@ func (server *Server) login(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
  	} 
 
-	rsp := loginResponse{
-		AccessToken: accessToken
+	rsp := loginResponse{ 
+		AccessToken: accessToken,
 	} 
 	ctx.JSON(http.StatusOK, rsp)
 }
