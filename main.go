@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	serverAddress = "0.0.0.0:8080"
+	serverAddress = "localhost:8081"
 )
 
 func main() {
