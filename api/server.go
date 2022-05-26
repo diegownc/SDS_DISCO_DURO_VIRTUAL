@@ -6,17 +6,25 @@ import (
 
 type Server struct {
 	router *gin.Engine
+	tokenMaker tokenMaker 
 }
 
-func NewServer() *Server {
-	server := &Server{}
+func NewServer() (*Server, error) {
+	tokenMaker, err := token.NewJWTMaker("12345678123456781234567812345678")
+
+	if err != nil {
+		return nil, fmt.Error("Cannot create token maker: %w", err)
+	}
+	server := &Server{
+		tokenMaker: tokenMaker,
+	}
 	router := gin.Default()
 
 	router.POST("/login", server.login)
 	router.POST("/registrar", server.registrar)
 
 	server.router = router
-	return server
+	return server, nil
 }
 
 func (server *Server) Start(address string) error {
