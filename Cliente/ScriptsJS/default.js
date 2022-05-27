@@ -16,18 +16,18 @@ function sendData(username, password, accion){
         let json = JSON.parse(obj);
         
         if(accion == "registrar"){
-            alert(json.msg)
+            alert(json.msg);
         }else{
-            if(json.result){
-                document.location = 'Web/uploadFile.html'
+            if(json.result){//LoginOK
+                document.getElementById("tokenUsuario").value = json.access_token
+                document.getElementById("inicio").style.display = "none"
+                document.getElementById("uploadFile").style.display = "block"
             }else{
                 alert(json.msg)
             }
         }
         console.log(json);});
 }
- 
-
 
 document.getElementById("registrar")
 .addEventListener("click", (evt) =>{

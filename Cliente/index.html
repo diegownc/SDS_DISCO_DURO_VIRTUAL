@@ -4,33 +4,38 @@
         <title> Autentificacion usuario</title>
     </head>
     <body>
-        <table align="center" style="padding-top:10%; border-spacing:15px;">
-            <tr>
-                <td>
-                    <label for="username" > Nombre de Usuario: </label>
-                </td>
-                <td>
-                    <input type="text" id="username">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <label for="password" > Contrasena: </label>
-                </td>
-                <td>
-                    <input type="text" id="password">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <button id="registrar"> Registrarse </button>
-                </td>
-                <td>
-                    <button id="login" > Entrar </button>
-                </td>
-            </tr>
-        </table>        
+        <input type="hidden" id="tokenUsuario">
+        <div id="inicio">
+            <table align="center" style="padding-top:10%; border-spacing:15px;">
+                <tr>
+                    <td><label for="username" > Nombre de Usuario: </label></td>
+                    <td><input type="text" id="username"></td>
+                </tr>
+                <tr>
+                    <td><label for="password" > Contrasena: </label></td>
+                    <td><input type="text" id="password"></td>
+                </tr>
+                <tr>
+                    <td> <button id="registrar"> Registrarse </button> </td>
+                    <td> <button id="login" > Entrar </button> </td>
+                </tr>
+            </table>
+        </div>
+        <script src="ScriptsJS/default.js"></script> 
 
-        <script src="ScriptsJS/default.js"></script>
+        <div id="uploadFile" style="display:none">
+            <table align="center" style="padding-top:10%; border-spacing:15px;">
+                <tr>
+                    <td> <label> Por favor adjunte el archivo que desea subir </label></td>
+                </tr>
+                <tr>
+                    <td> <input type="file" id="file"> </td>
+                </tr>
+                <tr>
+                    <td> <input type="submit" id="subir"></td>
+                </tr>
+            </table>        
+        </div>
+        <script src="ScriptsJS/updateFile.js"></script>  
     </body>
 </html>
