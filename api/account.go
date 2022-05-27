@@ -7,8 +7,10 @@ import (
 	 "github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/token"
 	db "github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/db"
 	"github.com/gin-gonic/gin"
+
 	"log"
 	"os"
+	"io"
 )
 
 const AccessTokenDuration = time.Duration(time.Minute)  
@@ -82,7 +84,7 @@ func (server *Server) uploadFile(ctx *gin.Context) {
 	  ctx.String(http.StatusBadRequest, "Bad request")
 	  return
   }
-  filename := header.filename
+  filename := header.Filename
 
   fmt.Println(file, err, filename)
 
@@ -95,5 +97,5 @@ func (server *Server) uploadFile(ctx *gin.Context) {
   if err != nil{
 	  log.Fatal(err)
   }
-  c.String(http.StatusCreated, "Upload succesful")
+  ctx.JSON(http.StatusCreated, "Upload succesful")
 }
