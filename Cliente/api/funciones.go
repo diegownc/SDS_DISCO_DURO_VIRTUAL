@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"encoding/base64"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -58,12 +57,12 @@ func (server *Server) registrar(ctx *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	fmt.Println("response Status:", resp.Status)
-	fmt.Println("response Headers:", resp.Header)
+	//fmt.Println("response Status:", resp.Status)
+	//fmt.Println("response Headers:", resp.Header)
 	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("response Body:", string(body))
+	//fmt.Println("response Body:", string(body))
 
-	ctx.JSON(http.StatusOK, gin.H{"Msg": string(body)})
+	ctx.JSON(http.StatusOK, string(body))
 
 }
 
@@ -112,11 +111,11 @@ func (server *Server) login(ctx *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	fmt.Println("response Status:", resp.Status)
-	fmt.Println("response Headers:", resp.Header)
+	//fmt.Println("response Status:", resp.Status)
+	//fmt.Println("response Headers:", resp.Header)
 	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("response Body:", string(body))
+	//fmt.Println("response Body:", string(body))
 
-	ctx.JSON(http.StatusOK, gin.H{"Msg": string(body)})
+	ctx.JSON(http.StatusOK, string(body))
 
 }

@@ -12,7 +12,19 @@ function sendData(username, password, accion){
         body: JSON.stringify({user: username, password: password})
     })
     .then(response => {return response.json()})
-    .then(json => {console.log(json)});
+    .then(obj => {
+        let json = JSON.parse(obj);
+        
+        if(accion == "registrar"){
+            alert(json.msg)
+        }else{
+            if(json.result){
+                document.location = 'Web/uploadFile.html'
+            }else{
+                alert(json.msg)
+            }
+        }
+        console.log(json);});
 }
  
 

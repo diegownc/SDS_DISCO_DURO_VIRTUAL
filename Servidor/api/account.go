@@ -22,9 +22,20 @@ type loginRequest struct {
 	Password string `form:"password" json:"password" xml:"password" binding:"required"`
 }
 
-type loginResponse struct {
+//Definimos los tipos de respuesta (todos tienen un Result para controlarlo en el js)
+type loginResponseSuccess struct {
 	Result      bool   `json:"result"`
 	AccessToken string `json:"access_token"`
+}
+
+type loginResponseFailure struct {
+	Result bool   `json:"result"`
+	Msg    string `json:"msg"`
+}
+
+type registryResponse struct {
+	Result bool   `json:"result"`
+	Msg    string `json:"msg"`
 }
 
 func (server *Server) registrar(ctx *gin.Context) {
@@ -75,11 +86,19 @@ func (server *Server) registrar(ctx *gin.Context) {
 	res := db.RegistroUsuario(string(usernameDescifrado), string(passwordDescifrado))
 
 	if res {
-		ctx.JSON(http.StatusOK, "Te has registrado correctamente")
-	} else {
-		ctx.JSON(http.StatusOK, "Ha ocurrido un error")
-	}
+		rsp := registryResponse{
+			Result: res,
+			Msg:    "Registrado correctamente.",
+		}
+		ctx.JSON(http.StatusOK, rsp)
 
+	} else {
+		rsp := registryResponse{
+			Result: res,
+			Msg:    "Este usuario ya esta registrado.",
+		}
+		ctx.JSON(http.StatusOK, rsp)
+	}
 }
 
 func (server *Server) login(ctx *gin.Context) {
@@ -140,11 +159,21 @@ func (server *Server) login(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 	}
 
-	rsp := loginResponse{
-		Result:      res,
-		AccessToken: accessToken,
+	if res {
+		rsp := loginResponseSuccess{
+			Result:      res,
+			AccessToken: accessToken,
+		}
+		ctx.JSON(http.StatusOK, rsp)
+
+	} else {
+		rsp := loginResponseFailure{
+			Result: res,
+			Msg:    "Credenciales incorrectas",
+		}
+		ctx.JSON(http.StatusOK, rsp)
 	}
-	ctx.JSON(http.StatusOK, rsp)
+
 }
 
 func (server *Server) getUsers(ctx *gin.Context) {
