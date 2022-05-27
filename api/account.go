@@ -70,3 +70,28 @@ func (server *Server) getUsers(ctx *gin.Context) {
 	fmt.Println("METODO QUE REQUIERE AUTENTIFICACION")
 
 }
+
+func (server *Server) uploadFile(ctx *gin.Context) {
+  name := ctx.PostForm("name")
+  fmt.Println(name)
+
+  file, header, err := ctx.Request.FormFile("upload")
+  if err != nil{
+	  ctx.String(http.StatusBadRequest, "Bad request")
+	  return
+  }
+  filename := header.filename
+
+  fmt.Println(file, err, filename)
+
+  out, err := os.Create(filename)
+  if err != nil{
+	  log.Fatal(err)
+  }
+  defer out.Close()
+  _, err = io.Copy(out, file)
+  if err != nil{
+	  log.Fatal(err)
+  }
+  c.String(http.StatusCreated, "Upload succesful")
+}

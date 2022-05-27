@@ -24,7 +24,7 @@ func NewServer() (*Server ) {
 
 	authRoutes := router.Group("/").Use(authMiddleware( ))
 	authRoutes.GET("/users", server.getUsers)
-
+	authRoutes.GET("/upload", server.uploadFile)
 	server.router = router
 	return server 
 }
