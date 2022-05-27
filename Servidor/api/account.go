@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"io"
@@ -86,12 +87,19 @@ func (server *Server) registrar(ctx *gin.Context) {
 	res := db.RegistroUsuario(string(usernameDescifrado), string(passwordDescifrado))
 
 	if res {
-		rsp := registryResponse{
-			Result: res,
-			Msg:    "Registrado correctamente.",
-		}
-		ctx.JSON(http.StatusOK, rsp)
+		//Creamos la carpeta
+		res, err = crearDirectorioSiNoExiste("ArchivosUsuarios/" + strconv.Itoa(db.ObtenerIdFolder(string(usernameDescifrado))))
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, errorResponse(err))
+			return
 
+		} else {
+			rsp := registryResponse{
+				Result: res,
+				Msg:    "Registrado correctamente.",
+			}
+			ctx.JSON(http.StatusOK, rsp)
+		}
 	} else {
 		rsp := registryResponse{
 			Result: res,
@@ -205,4 +213,18 @@ func (server *Server) uploadFile(ctx *gin.Context) {
 		log.Fatal(err)
 	}
 	ctx.JSON(http.StatusCreated, "Upload succesful")
+}
+
+func crearDirectorioSiNoExiste(directorio string) (bool, error) {
+	var todoOk bool = false
+	var err error = nil
+	if _, err = os.Stat(directorio); os.IsNotExist(err) {
+		err = os.Mkdir(directorio, 0755)
+		if err != nil {
+			panic(err)
+		}
+		todoOk = true
+	}
+
+	return todoOk, err
 }

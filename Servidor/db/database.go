@@ -59,6 +59,7 @@ func LoginUsuario(nombreUsuario string, contraUsuario string) bool {
 
 		if comprobarUsuario(nombreUsuario, contraUsuario, usernameDB, passwordDB) {
 			existeUsuario = true
+			break
 		}
 	}
 	err = rows.Err()
@@ -96,6 +97,7 @@ func RegistroUsuario(nombreUsuario string, contraUsuario string) bool {
 
 		if comprobarUsuario(nombreUsuario, contraUsuario, usernameDB, passwordDB) {
 			existeUsuario = true
+			break
 		}
 	}
 	err = rows.Err()
@@ -126,4 +128,35 @@ func checkError(err error) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func ObtenerIdFolder(username string) int {
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
+	checkError(err)
+	defer db.Close()
+
+	var usernameDB string
+	var idfolder int = 0
+	var match bool
+
+	rows, err := db.Query("Select username, idfolder from users")
+	checkError(err)
+
+	defer rows.Close()
+
+	for rows.Next() {
+		err := rows.Scan(&usernameDB, &idfolder)
+		checkError(err)
+
+		match, err = argon2sds.CompareHash(username, usernameDB)
+		if match && err != nil {
+			break
+		}
+
+	}
+	err = rows.Err()
+	checkError(err)
+
+	return idfolder
 }
