@@ -13,7 +13,7 @@ import (
 // openssl rsa -in rsa_private_key.pem -pubout -out rsa_public_key.pem
 // convierte el contenido del rsa_public_key.pem en un string
 func leerClavePublica() string {
-	datosBytes, err := ioutil.ReadFile("/home/usuario/Escritorio/SDS_DISCO_DURO_VIRTUAL-main/Cliente/api/rsa_public_key.pem")
+	datosBytes, err := ioutil.ReadFile("api/rsa_public_key.pem")
 	if err != nil {
 		log.Fatal(err)
 	}
