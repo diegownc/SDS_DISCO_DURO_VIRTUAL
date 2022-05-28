@@ -11,6 +11,7 @@ type Server struct {
 func NewServer() *Server {
 	server := &Server{}
 	router := gin.Default()
+	router.SetTrustedProxies([]string{"localhost"})
 
 	router = gin.New()
 	router.Use(CORSMiddleware())

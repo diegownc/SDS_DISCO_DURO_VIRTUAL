@@ -14,9 +14,10 @@ type errorType struct {
 }
 
 func NewServer() *Server {
-
+ 
 	server := &Server{}
 	router := gin.Default()
+	router.SetTrustedProxies([]string{"localhost"})
 
 	router.POST("/login", server.login)
 	router.POST("/registrar", server.registrar)
