@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/base64"
 
 	"io/ioutil"
@@ -41,7 +42,7 @@ func (server *Server) registrar(ctx *gin.Context) {
 	usernameCifrado := base64.StdEncoding.EncodeToString(usernameCifradoRSA)
 	passwordCifrado := base64.StdEncoding.EncodeToString(passwordCifradoRSA)
 
-	url := "http://localhost:8081/registrar"
+	url := "https://localhost:8081/registrar"
 	var jsonStr = []byte(`{"username": "` + usernameCifrado + `", "password" : "` + passwordCifrado + `"}`)
 	req2, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 	if err != nil {
@@ -50,7 +51,11 @@ func (server *Server) registrar(ctx *gin.Context) {
 	}
 	req2.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	//client := &http.Client{}
 	resp, err := client.Do(req2)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
@@ -58,10 +63,7 @@ func (server *Server) registrar(ctx *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	//fmt.Println("response Status:", resp.Status)
-	//fmt.Println("response Headers:", resp.Header)
 	body, _ := ioutil.ReadAll(resp.Body)
-	//fmt.Println("response Body:", string(body))
 
 	ctx.JSON(http.StatusOK, string(body))
 
@@ -95,7 +97,7 @@ func (server *Server) login(ctx *gin.Context) {
 	passwordCifrado := base64.StdEncoding.EncodeToString(passwordCifradoRSA)
 
 	//Hago una petición al server.go
-	url := "http://localhost:8081/login"
+	url := "https://localhost:8081/login"
 	var jsonStr = []byte(`{"username": "` + usernameCifrado + `", "password" : "` + passwordCifrado + `"}`)
 	req2, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 	if err != nil {
@@ -104,7 +106,10 @@ func (server *Server) login(ctx *gin.Context) {
 	}
 	req2.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
 	resp, err := client.Do(req2)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))

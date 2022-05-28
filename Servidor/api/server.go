@@ -21,8 +21,6 @@ func NewServer() *Server {
 
 	router.POST("/login", server.login)
 	router.POST("/registrar", server.registrar)
-	
-	
 
 	authRoutes := router.Group("/").Use(authMiddleware())
 	authRoutes.GET("/users", server.getUsers)
@@ -33,7 +31,8 @@ func NewServer() *Server {
 }
 
 func (server *Server) Start(address string) error {
-	return server.router.Run(address)
+	//return server.router.Run(address)
+	return server.router.RunTLS(address, "certificados/localhost.crt", "certificados/localhost.key")
 }
 
 func errorResponse(err error) errorType {

@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -54,7 +55,7 @@ func (server *Server) upload(ctx *gin.Context) {
 	bodyWriter.Close()
 
 	//Aqui estoy haciendo la petición al servidor... y estoy intentando averiguar como enviar el "file"
-	url := "http://localhost:8081/upload"
+	url := "https://localhost:8081/upload"
 
 	req2, err := http.NewRequest("POST", url, bodyBuf)
 	if err != nil {
@@ -65,7 +66,10 @@ func (server *Server) upload(ctx *gin.Context) {
 	authorizationString := "Bearer " + tokenUsuario
 	req2.Header.Set("Authorization", authorizationString)
 
-	client := &http.Client{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
 	resp, err := client.Do(req2)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
@@ -88,7 +92,7 @@ func (server *Server) getNameFiles(ctx *gin.Context) {
 	contentType := bodyWriter.FormDataContentType()
 	bodyWriter.Close()
 
-	url := "http://localhost:8081/nameFiles"
+	url := "https://localhost:8081/nameFiles"
 	req2, err := http.NewRequest("POST", url, bodyBuf)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
@@ -98,7 +102,10 @@ func (server *Server) getNameFiles(ctx *gin.Context) {
 	authorizationString := "Bearer " + tokenUsuario
 	req2.Header.Set("Authorization", authorizationString)
 
-	client := &http.Client{}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
 	resp, err := client.Do(req2)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
