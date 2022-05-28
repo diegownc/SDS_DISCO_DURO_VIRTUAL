@@ -20,6 +20,7 @@ function sendData(username, password, accion){
         }else{
             if(json.result){//LoginOK
                 document.getElementById("tokenUsuario").value = json.access_token
+                document.getElementById("usernameLogin").value = document.getElementById("username").value
                 document.getElementById("inicio").style.display = "none"
                 document.getElementById("uploadFile").style.display = "block"
             }else{

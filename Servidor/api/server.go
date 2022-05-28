@@ -21,10 +21,10 @@ func NewServer() *Server {
 
 	router.POST("/login", server.login)
 	router.POST("/registrar", server.registrar)
+	router.POST("/upload", server.uploadFile)
 
 	authRoutes := router.Group("/").Use(authMiddleware())
 	authRoutes.GET("/users", server.getUsers)
-	authRoutes.POST("/upload", server.uploadFile)
 	server.router = router
 	return server
 }

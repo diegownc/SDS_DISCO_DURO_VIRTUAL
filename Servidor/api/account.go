@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	"io"
-	"log"
 	"os"
 
 	db "github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/db"
@@ -191,28 +189,39 @@ func (server *Server) getUsers(ctx *gin.Context) {
 }
 
 func (server *Server) uploadFile(ctx *gin.Context) {
-	name := ctx.PostForm("name")
-	fmt.Println(name)
 
-	file, header, err := ctx.Request.FormFile("upload")
+	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
+	username := ctx.Request.PostFormValue("username")
+
+	fmt.Println(tokenUsuario)
+
+	tokenMaker, err := token.NewJWTMaker("12345678123456781234567812345678")
 	if err != nil {
-		ctx.String(http.StatusBadRequest, "Bad request")
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-	filename := header.Filename
 
-	fmt.Println(file, err, filename)
+	_, err = tokenMaker.VerifyToken(tokenUsuario)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	fmt.Println()
+	fmt.Println()
 
-	out, err := os.Create(filename)
+	file, err := ctx.FormFile("file")
 	if err != nil {
-		log.Fatal(err)
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
 	}
-	defer out.Close()
-	_, err = io.Copy(out, file)
+
+	fmt.Println("El nombre del archivo es.. ", file.Filename)
+
+	err = ctx.SaveUploadedFile(file, "ArchivosUsuarios/"+strconv.Itoa(db.ObtenerIdFolder(username))+"/"+file.Filename)
 	if err != nil {
-		log.Fatal(err)
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
 	}
-	ctx.JSON(http.StatusCreated, "Upload succesful")
 }
 
 func crearDirectorioSiNoExiste(directorio string) (bool, error) {
