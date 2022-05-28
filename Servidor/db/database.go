@@ -160,3 +160,20 @@ func ObtenerIdFolder(username string) int {
 
 	return idfolder
 }
+
+func RegistrarArchivo(filename string, comment string, idfolder int) bool {
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
+	checkError(err)
+	defer db.Close()
+
+	sqlStatement := `INSERT INTO files (filename, comment, idfolder) VALUES ($1, $2, $3)`
+	_, err = db.Exec(sqlStatement, filename, comment, idfolder)
+
+	if err != nil {
+		fmt.Println(err.Error())
+		return false
+	}
+
+	return true
+}

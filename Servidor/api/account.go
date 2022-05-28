@@ -4,10 +4,9 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
-
-	"os"
 
 	db "github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/db"
 	"github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/token"
@@ -186,42 +185,6 @@ func (server *Server) getUsers(ctx *gin.Context) {
 
 	fmt.Println("METODO QUE REQUIERE AUTENTIFICACION")
 
-}
-
-func (server *Server) uploadFile(ctx *gin.Context) {
-
-	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
-	username := ctx.Request.PostFormValue("username")
-
-	fmt.Println(tokenUsuario)
-
-	tokenMaker, err := token.NewJWTMaker("12345678123456781234567812345678")
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	_, err = tokenMaker.VerifyToken(tokenUsuario)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-	fmt.Println()
-	fmt.Println()
-
-	file, err := ctx.FormFile("file")
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	fmt.Println("El nombre del archivo es.. ", file.Filename)
-
-	err = ctx.SaveUploadedFile(file, "ArchivosUsuarios/"+strconv.Itoa(db.ObtenerIdFolder(username))+"/"+file.Filename)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
 }
 
 func crearDirectorioSiNoExiste(directorio string) (bool, error) {

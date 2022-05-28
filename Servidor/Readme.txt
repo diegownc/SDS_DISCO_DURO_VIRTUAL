@@ -22,9 +22,19 @@ idfolder serial,
 constraint pk_user primary key (username),
 constraint u_folder unique (idfolder));
 
-grant select, insert on table users to normaluser;
-grant usage, select on sequence users_idfolder_seq to normaluser;
+create table files(
+filename character varying (255) not null,
+comment character varying (255) not null,
+idfolder integer,
+idfile serial,
+constraint pk_file primary key (idfile));
 
+//Establecemos los permisos
+grant select, insert on table users to normaluser;
+grant delete, select, insert on table files to normaluser;
+
+grant usage, select on sequence users_idfolder_seq to normaluser;
+grant usage, select on sequence files_idfile_seq to normaluser;
 
 //////////////////////////////////////////////////////7
 Pasos para ejecutar este programa
