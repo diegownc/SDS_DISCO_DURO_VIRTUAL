@@ -168,14 +168,21 @@ func RegistrarArchivo(filename string, comment string, idfolder int) bool {
 	checkError(err)
 	defer db.Close()
 
-	sqlStatement := `INSERT INTO files (filename, comment, idfolder) VALUES ($1, $2, $3)`
-	_, err = db.Exec(sqlStatement, filename, comment, idfolder)
+	rows, err := db.Query("Select 1 from files where filename=" + filename)
+ 
 
-	if err != nil {
-		fmt.Println(err.Error())
+	if rows.Next() {
+		sqlStatement := `INSERT INTO files (filename, comment, idfolder) VALUES ($1, $2, $3)`
+		_, err = db.Exec(sqlStatement, filename, comment, idfolder)
+
+		if err != nil {
+			fmt.Println(err.Error())
+			return false
+		} 
+	}else{
 		return false
-	}
-
+	} 
+		 
 	return true
 }
 
