@@ -23,11 +23,27 @@ function sendData(username, password, accion){
                 document.getElementById("usernameLogin").value = document.getElementById("username").value
                 document.getElementById("inicio").style.display = "none"
                 document.getElementById("uploadFile").style.display = "block"
+                getData()
             }else{
                 alert(json.msg)
             }
         }
         console.log(json);});
+}
+
+function getData(tokenUsuario, username){
+    let headers = new Headers();
+
+    headers.append('Content-Type', 'application/json');
+    const url_web = 'http://localhost:8080/nameFiles';
+    fetch(url_web ,{
+        method: 'POST',
+        mode: 'cors',
+        headers: headers,
+        body: JSON.stringify({tokenUsuario: tokenUsuario, username: username})
+    })
+    .then(response => {return response.json()})
+    .then(obj => {console.log(obj);});
 }
 
 document.getElementById("registrar")

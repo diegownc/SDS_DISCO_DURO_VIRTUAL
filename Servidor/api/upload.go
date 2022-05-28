@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -20,8 +19,6 @@ func (server *Server) uploadFile(ctx *gin.Context) {
 	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
 	username := ctx.Request.PostFormValue("username")
 
-	fmt.Println(tokenUsuario)
-
 	tokenMaker, err := token.NewJWTMaker("12345678123456781234567812345678")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
@@ -33,16 +30,12 @@ func (server *Server) uploadFile(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-	fmt.Println()
-	fmt.Println()
 
 	file, err := ctx.FormFile("file")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-
-	fmt.Println("El nombre del archivo es.. ", file.Filename)
 
 	idfolder := db.ObtenerIdFolder(username)
 	err = ctx.SaveUploadedFile(file, "ArchivosUsuarios/"+strconv.Itoa(idfolder)+"/"+file.Filename)
@@ -67,5 +60,31 @@ func (server *Server) uploadFile(ctx *gin.Context) {
 		Msg:    "Almacenado correctamente.",
 	}
 	ctx.JSON(http.StatusOK, rsp)
-	return
+}
+
+func (server *Server) getNameFiles(ctx *gin.Context) {
+
+	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
+	username := ctx.Request.PostFormValue("username")
+
+	tokenMaker, err := token.NewJWTMaker("12345678123456781234567812345678")
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	_, err = tokenMaker.VerifyToken(tokenUsuario)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	idfolder := db.ObtenerIdFolder(username)
+	res := db.ObtenerArchivosUsuario(strconv.Itoa(idfolder))
+
+	rsp := registryResponse{
+		Result: true,
+		Msg:    res,
+	}
+	ctx.JSON(http.StatusOK, rsp)
 }

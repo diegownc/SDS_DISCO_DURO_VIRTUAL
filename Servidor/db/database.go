@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 
 	"github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/argon2sds"
 )
@@ -176,4 +177,35 @@ func RegistrarArchivo(filename string, comment string, idfolder int) bool {
 	}
 
 	return true
+}
+
+//Obtiene los filenames de la carpeta del usuario
+func ObtenerArchivosUsuario(idfolder string) string {
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
+	checkError(err)
+	defer db.Close()
+
+	rows, err := db.Query("Select filename, idfile from files where idfolder=" + idfolder)
+	checkError(err)
+
+	defer rows.Close()
+
+	var filenameDB string
+	var idfile int
+	var res string
+	for rows.Next() {
+		err := rows.Scan(&filenameDB, &idfile)
+		checkError(err)
+		// cada archivo conformará un conjunto de esta forma -> (filenameDB, idfile)
+		res = "(" + filenameDB + "," + strconv.Itoa(idfile) + "),"
+	}
+
+	//Quitamos la última coma ","
+	if len(res) > 0 {
+		last := len(res) - 1
+		res = res[:last]
+	}
+
+	return res
 }

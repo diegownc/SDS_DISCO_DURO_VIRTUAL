@@ -19,6 +19,7 @@ func NewServer() *Server {
 	router.POST("/registrar", server.registrar)
 	router.POST("/login", server.login)
 	router.POST("/upload", server.upload)
+	router.POST("/nameFiles", server.upload)
 
 	server.router = router
 	return server
