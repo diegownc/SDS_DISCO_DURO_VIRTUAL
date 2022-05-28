@@ -62,6 +62,8 @@ func (server *Server) upload(ctx *gin.Context) {
 		return
 	}
 	req2.Header.Set("Content-Type", contentType)
+	authorizationString := "Bearer " + tokenUsuario
+	req2.Header.Set("Authorization", authorizationString)
 
 	client := &http.Client{}
 	resp, err := client.Do(req2)
@@ -88,8 +90,9 @@ func (server *Server) getNameFiles(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
+	fmt.Println(req.username)
 
-	url := "http://localhost:8081/registrar"
+	url := "http://localhost:8081/nameFiles"
 	var jsonStr = []byte(`{"username": "` + req.username + `", "tokenUsuario" : "` + req.tokenUsuario + `"}`)
 	req2, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 	if err != nil {
@@ -97,6 +100,8 @@ func (server *Server) getNameFiles(ctx *gin.Context) {
 		return
 	}
 	req2.Header.Set("Content-Type", "application/json")
+	authorizationString := "Bearer " + req.tokenUsuario
+	req2.Header.Set("Authorization", authorizationString)
 
 	client := &http.Client{}
 	resp, err := client.Do(req2)

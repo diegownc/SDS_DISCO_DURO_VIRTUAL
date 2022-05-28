@@ -62,10 +62,19 @@ func (server *Server) uploadFile(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, rsp)
 }
 
-func (server *Server) getNameFiles(ctx *gin.Context) {
+type nameFilesRequest struct {
+	tokenUsuario string `form:"tokenUsuario" json:"tokenUsuario" xml:"tokenUsuario" binding:"required"`
+	username     string `form:"username" json:"username" xml:"username" binding:"required"`
+}
 
-	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
-	username := ctx.Request.PostFormValue("username")
+func (server *Server) getNameFiles(ctx *gin.Context) {
+ 
+	var req nameFilesRequest
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
 
 	tokenMaker, err := token.NewJWTMaker("12345678123456781234567812345678")
 	if err != nil {
@@ -73,16 +82,16 @@ func (server *Server) getNameFiles(ctx *gin.Context) {
 		return
 	}
 
-	_, err = tokenMaker.VerifyToken(tokenUsuario)
+	_, err = tokenMaker.VerifyToken(req.tokenUsuario)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	idfolder := db.ObtenerIdFolder(username)
+	idfolder := db.ObtenerIdFolder(req.username)
 	res := db.ObtenerArchivosUsuario(strconv.Itoa(idfolder))
 
-	rsp := registryResponse{
+	rsp := uploadResponse{
 		Result: true,
 		Msg:    res,
 	}

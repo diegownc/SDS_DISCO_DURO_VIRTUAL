@@ -206,6 +206,7 @@ func ObtenerArchivosUsuario(idfolder string) string {
 		last := len(res) - 1
 		res = res[:last]
 	}
+	fmt.Println(res)
 
 	return res
 }
