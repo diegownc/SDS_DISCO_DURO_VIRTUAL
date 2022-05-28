@@ -1,6 +1,6 @@
 package api
 
-import (
+import ( //
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,6 +20,7 @@ func NewServer() *Server {
 	router.POST("/login", server.login)
 	router.POST("/upload", server.upload)
 	router.POST("/nameFiles", server.getNameFiles)
+	router.POST("/download", server.download)
 
 	server.router = router
 	return server

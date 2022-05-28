@@ -168,21 +168,22 @@ func RegistrarArchivo(filename string, comment string, idfolder int) bool {
 	checkError(err)
 	defer db.Close()
 
-	rows, err := db.Query("Select 1 from files where filename=" + filename)
- 
+	rows, err := db.Query("Select 1 from files where filename='" + filename + "' and idfolder =" + strconv.Itoa(idfolder))
+	fmt.Println(filename)
+	checkError(err)
 
-	if rows.Next() {
+	if !rows.Next() {
 		sqlStatement := `INSERT INTO files (filename, comment, idfolder) VALUES ($1, $2, $3)`
 		_, err = db.Exec(sqlStatement, filename, comment, idfolder)
 
 		if err != nil {
 			fmt.Println(err.Error())
 			return false
-		} 
-	}else{
+		}
+	} else {
 		return false
-	} 
-		 
+	}
+
 	return true
 }
 
@@ -216,4 +217,24 @@ func ObtenerArchivosUsuario(idfolder string) string {
 	fmt.Println(res)
 
 	return res
+}
+
+func ObtenerFileName(idfile string) string {
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
+	checkError(err)
+	defer db.Close()
+
+	rows, err := db.Query("Select filename from files where idfile=" + idfile)
+	checkError(err)
+
+	defer rows.Close()
+
+	var filenameDB string
+	if rows.Next() {
+		err := rows.Scan(&filenameDB)
+		checkError(err)
+	}
+
+	return filenameDB
 }

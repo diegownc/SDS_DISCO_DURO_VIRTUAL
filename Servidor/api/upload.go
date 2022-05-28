@@ -1,14 +1,13 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
 	db "github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/db"
 	"github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/token"
 	"github.com/gin-gonic/gin"
-
-	"fmt"
 )
 
 type uploadResponse struct {
@@ -69,8 +68,6 @@ func (server *Server) getNameFiles(ctx *gin.Context) {
 	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
 	username := ctx.Request.PostFormValue("username")
 
-	fmt.Println("patata")
-	fmt.Println(tokenUsuario)
 	tokenMaker, err := token.NewJWTMaker("12345678123456781234567812345678")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
@@ -91,4 +88,32 @@ func (server *Server) getNameFiles(ctx *gin.Context) {
 		Msg:    res,
 	}
 	ctx.JSON(http.StatusOK, rsp)
+}
+
+func (server *Server) download(ctx *gin.Context) {
+
+	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
+	username := ctx.Request.PostFormValue("username")
+	idfile := ctx.Request.PostFormValue("idfile")
+
+	tokenMaker, err := token.NewJWTMaker("12345678123456781234567812345678")
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	_, err = tokenMaker.VerifyToken(tokenUsuario)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	idfolder := db.ObtenerIdFolder(username)
+	filename := db.ObtenerFileName(idfile)
+
+	path := "ArchivosUsuarios/" + strconv.Itoa(idfolder) + "/" + filename
+	fmt.Println("El path del archivo es.. " + path)
+
+	ctx.Status(200)
+	ctx.File(path)
 }

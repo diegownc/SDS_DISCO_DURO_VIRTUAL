@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -117,4 +118,62 @@ func (server *Server) getNameFiles(ctx *gin.Context) {
 	body, _ := ioutil.ReadAll(resp.Body)
 
 	ctx.JSON(http.StatusOK, string(body))
+}
+
+func (server *Server) download(ctx *gin.Context) {
+	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
+	username := ctx.Request.PostFormValue("username")
+	idfile := ctx.Request.PostFormValue("idfile")
+
+	bodyBuf := &bytes.Buffer{}
+	bodyWriter := multipart.NewWriter(bodyBuf)
+	bodyWriter.WriteField("tokenUsuario", tokenUsuario)
+	bodyWriter.WriteField("username", username)
+	bodyWriter.WriteField("idfile", idfile)
+	contentType := bodyWriter.FormDataContentType()
+	bodyWriter.Close()
+
+	url := "https://localhost:8081/download"
+	req2, err := http.NewRequest("POST", url, bodyBuf)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	req2.Header.Set("Content-Type", contentType)
+	authorizationString := "Bearer " + tokenUsuario
+	req2.Header.Set("Authorization", authorizationString)
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	resp, err := client.Do(req2)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	defer resp.Body.Close()
+
+	//Obtenemos la respuesta del servidor
+	//body, _ := ioutil.ReadAll(resp.Body)
+
+	file, err := os.Create("temp-files/patata") // crea el fichero de destino (servidor)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	defer file.Close() // cierra el fichero al salir de ámbito
+
+	io.Copy(file, resp.Body) // copia desde el Body del request al fichero con streaming
+
+	fmt.Println("enviare el archivo...")
+	ctx.Header("Content-Type", "application/octet-stream")
+	//Force browser download
+	ctx.Header("Content-Disposition", "attachment; filename="+file.Name())
+	//Browser download or preview
+	ctx.Header("Content-Disposition", "inline;filename="+file.Name())
+	ctx.Header("Content-Transfer-Encoding", "binary")
+	ctx.Header("Cache-Control", "no-cache")
+	ctx.File("temp-files/patata")
 }
