@@ -23,7 +23,7 @@ function sendData(username, password, accion){
                 document.getElementById("usernameLogin").value = document.getElementById("username").value
                 document.getElementById("inicio").style.display = "none"
                 document.getElementById("uploadFile").style.display = "block"
-                getData()
+                getData(document.getElementById("tokenUsuario").value,  document.getElementById("usernameLogin").value)
             }else{
                 alert(json.msg)
             }
@@ -33,14 +33,14 @@ function sendData(username, password, accion){
 
 function getData(tokenUsuario, username){
     let headers = new Headers();
-
+    console.log("El usuario es: " + username)
     headers.append('Content-Type', 'application/json');
     const url_web = 'http://localhost:8080/nameFiles';
     fetch(url_web ,{
         method: 'POST',
         mode: 'cors',
         headers: headers,
-        body: JSON.stringify({tokenUsuario: tokenUsuario, username: username})
+        body: JSON.stringify({token: tokenUsuario, user: username})
     })
     .then(response => {return response.json()})
     .then(obj => {console.log(obj);});

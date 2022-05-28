@@ -78,8 +78,8 @@ func (server *Server) upload(ctx *gin.Context) {
 }
 
 type nameFilesRequest struct {
-	tokenUsuario string `form:"tokenUsuario" json:"tokenUsuario" xml:"tokenUsuario" binding:"required"`
-	username     string `form:"username" json:"username" xml:"username" binding:"required"`
+	tokenUsuario string `form:"token" json:"token" xml:"token" binding:"required"`
+	username     string `form:"user" json:"user" xml:"user" binding:"required"`
 }
 
 func (server *Server) getNameFiles(ctx *gin.Context) {
@@ -87,9 +87,11 @@ func (server *Server) getNameFiles(ctx *gin.Context) {
 	var req nameFilesRequest
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
+		fmt.Println("PETA AQUI")
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
+	fmt.Println("PATATA")
 	fmt.Println(req.username)
 
 	url := "http://localhost:8081/nameFiles"
