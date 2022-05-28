@@ -198,7 +198,7 @@ func ObtenerArchivosUsuario(idfolder string) string {
 		err := rows.Scan(&filenameDB, &idfile)
 		checkError(err)
 		// cada archivo conformará un conjunto de esta forma -> (filenameDB, idfile)
-		res = "(" + filenameDB + "," + strconv.Itoa(idfile) + "),"
+		res = res + "(" + filenameDB + "," + strconv.Itoa(idfile) + "),"
 	}
 
 	//Quitamos la última coma ","

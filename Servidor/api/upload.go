@@ -64,31 +64,26 @@ func (server *Server) uploadFile(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, rsp)
 }
 
-type nameFilesRequest struct {
-	tokenUsuario string `form:"tokenUsuario" json:"tokenUsuario" xml:"tokenUsuario" binding:"required"`
-	username     string `form:"username" json:"username" xml:"username" binding:"required"`
-}
-
 func (server *Server) getNameFiles(ctx *gin.Context) {
- 
+
 	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
 	username := ctx.Request.PostFormValue("username")
- 
-	fmt.Println( "patat")
-	fmt.Println( tokenUsuario)
+
+	fmt.Println("patata")
+	fmt.Println(tokenUsuario)
 	tokenMaker, err := token.NewJWTMaker("12345678123456781234567812345678")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	_, err = tokenMaker.VerifyToken( tokenUsuario)
+	_, err = tokenMaker.VerifyToken(tokenUsuario)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	idfolder := db.ObtenerIdFolder( username)
+	idfolder := db.ObtenerIdFolder(username)
 	res := db.ObtenerArchivosUsuario(strconv.Itoa(idfolder))
 
 	rsp := uploadResponse{

@@ -77,11 +77,6 @@ func (server *Server) upload(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, string(body))
 }
 
-type nameFilesRequest struct {
-	tokenUsuario string `form:"token" json:"token" xml:"token" binding:"required"`
-	username     string `form:"user" json:"user" xml:"user" binding:"required"`
-}
-
 func (server *Server) getNameFiles(ctx *gin.Context) {
 	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
 	username := ctx.Request.PostFormValue("username")
@@ -92,7 +87,7 @@ func (server *Server) getNameFiles(ctx *gin.Context) {
 	bodyWriter.WriteField("username", username)
 	contentType := bodyWriter.FormDataContentType()
 	bodyWriter.Close()
-	
+
 	url := "http://localhost:8081/nameFiles"
 	req2, err := http.NewRequest("POST", url, bodyBuf)
 	if err != nil {
@@ -102,7 +97,7 @@ func (server *Server) getNameFiles(ctx *gin.Context) {
 	req2.Header.Set("Content-Type", contentType)
 	authorizationString := "Bearer " + tokenUsuario
 	req2.Header.Set("Authorization", authorizationString)
- 
+
 	client := &http.Client{}
 	resp, err := client.Do(req2)
 	if err != nil {
