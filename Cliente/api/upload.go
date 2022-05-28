@@ -83,28 +83,26 @@ type nameFilesRequest struct {
 }
 
 func (server *Server) getNameFiles(ctx *gin.Context) {
+	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
+	username := ctx.Request.PostFormValue("username")
 
-	var req nameFilesRequest
-	err := ctx.ShouldBindJSON(&req)
-	if err != nil {
-		fmt.Println("PETA AQUI")
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-	fmt.Println("PATATA")
-	fmt.Println(req.username)
-
+	bodyBuf := &bytes.Buffer{}
+	bodyWriter := multipart.NewWriter(bodyBuf)
+	bodyWriter.WriteField("tokenUsuario", tokenUsuario)
+	bodyWriter.WriteField("username", username)
+	contentType := bodyWriter.FormDataContentType()
+	bodyWriter.Close()
+	
 	url := "http://localhost:8081/nameFiles"
-	var jsonStr = []byte(`{"username": "` + req.username + `", "tokenUsuario" : "` + req.tokenUsuario + `"}`)
-	req2, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	req2, err := http.NewRequest("POST", url, bodyBuf)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-	req2.Header.Set("Content-Type", "application/json")
-	authorizationString := "Bearer " + req.tokenUsuario
+	req2.Header.Set("Content-Type", contentType)
+	authorizationString := "Bearer " + tokenUsuario
 	req2.Header.Set("Authorization", authorizationString)
-
+ 
 	client := &http.Client{}
 	resp, err := client.Do(req2)
 	if err != nil {

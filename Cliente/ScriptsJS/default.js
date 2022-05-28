@@ -31,19 +31,20 @@ function sendData(username, password, accion){
         console.log(json);});
 }
 
-function getData(tokenUsuario, username){
-    let headers = new Headers();
-    console.log("El usuario es: " + username)
-    headers.append('Content-Type', 'application/json');
+function getData(tokenUsuario, username){ 
+    var data = new FormData()
+ 
+    data.append('tokenUsuario', tokenUsuario)
+    data.append('username', username)
+    
     const url_web = 'http://localhost:8080/nameFiles';
-    fetch(url_web ,{
+    fetch(url_web, {
         method: 'POST',
         mode: 'cors',
-        headers: headers,
-        body: JSON.stringify({token: tokenUsuario, user: username})
+        body: data
     })
     .then(response => {return response.json()})
-    .then(obj => {console.log(obj);});
+    .then(obj => {console.log(obj)})
 }
 
 document.getElementById("registrar")

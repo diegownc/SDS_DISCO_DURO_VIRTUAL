@@ -7,6 +7,8 @@ import (
 	db "github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/db"
 	"github.com/diegownc/SDS_DISCO_DURO_VIRTUAL/token"
 	"github.com/gin-gonic/gin"
+
+	"fmt"
 )
 
 type uploadResponse struct {
@@ -69,26 +71,24 @@ type nameFilesRequest struct {
 
 func (server *Server) getNameFiles(ctx *gin.Context) {
  
-	var req nameFilesRequest
-	err := ctx.ShouldBindJSON(&req)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
+	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
+	username := ctx.Request.PostFormValue("username")
+ 
+	fmt.Println( "patat")
+	fmt.Println( tokenUsuario)
 	tokenMaker, err := token.NewJWTMaker("12345678123456781234567812345678")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	_, err = tokenMaker.VerifyToken(req.tokenUsuario)
+	_, err = tokenMaker.VerifyToken( tokenUsuario)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	idfolder := db.ObtenerIdFolder(req.username)
+	idfolder := db.ObtenerIdFolder( username)
 	res := db.ObtenerArchivosUsuario(strconv.Itoa(idfolder))
 
 	rsp := uploadResponse{
