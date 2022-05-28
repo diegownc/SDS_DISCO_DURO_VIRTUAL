@@ -3,12 +3,15 @@ package api
 import (
 	"bytes"
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -28,6 +31,17 @@ func (server *Server) upload(ctx *gin.Context) {
 
 	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
 	username := ctx.Request.PostFormValue("username")
+	//Encriptamos el usuario
+	clavePublica := leerClavePublica()
+
+	usernameCifradoRSA, err := RsaEncrypt([]byte(username), []byte(clavePublica))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Antes de enviarlo convierto el contenido a base64
+	usernameCifrado := base64.StdEncoding.EncodeToString(usernameCifradoRSA)
 
 	//Preparo el request para enviarselo al servidor
 	buf := bytes.NewBuffer(nil)
@@ -44,7 +58,7 @@ func (server *Server) upload(ctx *gin.Context) {
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
 	bodyWriter.WriteField("tokenUsuario", tokenUsuario)
-	bodyWriter.WriteField("username", username)
+	bodyWriter.WriteField("username", usernameCifrado)
 	fileWriter, err := bodyWriter.CreateFormFile(fileitem.Key, fileitem.FileName)
 	if err != nil {
 		fmt.Println(err)
@@ -85,11 +99,22 @@ func (server *Server) upload(ctx *gin.Context) {
 func (server *Server) getNameFiles(ctx *gin.Context) {
 	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
 	username := ctx.Request.PostFormValue("username")
+	//Encriptamos el usuario
+	clavePublica := leerClavePublica()
+
+	usernameCifradoRSA, err := RsaEncrypt([]byte(username), []byte(clavePublica))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Antes de enviarlo convierto el contenido a base64
+	usernameCifrado := base64.StdEncoding.EncodeToString(usernameCifradoRSA)
 
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
 	bodyWriter.WriteField("tokenUsuario", tokenUsuario)
-	bodyWriter.WriteField("username", username)
+	bodyWriter.WriteField("username", usernameCifrado)
 	contentType := bodyWriter.FormDataContentType()
 	bodyWriter.Close()
 
@@ -125,11 +150,29 @@ func (server *Server) download(ctx *gin.Context) {
 	username := ctx.Request.PostFormValue("username")
 	idfile := ctx.Request.PostFormValue("idfile")
 
+	clavePublica := leerClavePublica()
+
+	usernameCifradoRSA, err := RsaEncrypt([]byte(username), []byte(clavePublica))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	idfileCifradoRSA, err := RsaEncrypt([]byte(idfile), []byte(clavePublica))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Antes de enviarlo convierto el contenido a base64
+	usernameCifrado := base64.StdEncoding.EncodeToString(usernameCifradoRSA)
+	idfileCifrado := base64.StdEncoding.EncodeToString(idfileCifradoRSA)
+
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
 	bodyWriter.WriteField("tokenUsuario", tokenUsuario)
-	bodyWriter.WriteField("username", username)
-	bodyWriter.WriteField("idfile", idfile)
+	bodyWriter.WriteField("username", usernameCifrado)
+	bodyWriter.WriteField("idfile", idfileCifrado)
 	contentType := bodyWriter.FormDataContentType()
 	bodyWriter.Close()
 
@@ -154,10 +197,8 @@ func (server *Server) download(ctx *gin.Context) {
 	}
 	defer resp.Body.Close()
 
-	//Obtenemos la respuesta del servidor
-	//body, _ := ioutil.ReadAll(resp.Body)
-
-	file, err := os.Create("temp-files/patata") // crea el fichero de destino (servidor)
+	filename := "archivo" + strconv.Itoa(time.Now().Nanosecond()) + strconv.Itoa(time.Now().Second())
+	file, err := os.Create("temp-files/" + filename) // crea el fichero de destino (servidor)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
@@ -165,15 +206,17 @@ func (server *Server) download(ctx *gin.Context) {
 
 	defer file.Close() // cierra el fichero al salir de ámbito
 
+	//Guardamos en file el contenido de lo que devuelve el servidor
 	io.Copy(file, resp.Body) // copia desde el Body del request al fichero con streaming
 
-	fmt.Println("enviare el archivo...")
-	ctx.Header("Content-Type", "application/octet-stream")
+	//ctx.Header("Content-Type", "application/octet-stream")
 	//Force browser download
-	ctx.Header("Content-Disposition", "attachment; filename="+file.Name())
+	//ctx.Header("Content-Disposition", "attachment; filename="+file.Name())
 	//Browser download or preview
-	ctx.Header("Content-Disposition", "inline;filename="+file.Name())
-	ctx.Header("Content-Transfer-Encoding", "binary")
-	ctx.Header("Cache-Control", "no-cache")
-	ctx.File("temp-files/patata")
+	//ctx.Header("Content-Disposition", "inline;filename="+file.Name())
+	//ctx.Header("Content-Transfer-Encoding", "binary")
+	//ctx.Header("Cache-Control", "no-cache")
+	//ctx.File("temp-files/patata")
+
+	ctx.JSON(http.StatusOK, "Se ha descargado un archivo llamado "+filename)
 }

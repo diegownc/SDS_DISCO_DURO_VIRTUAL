@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -20,6 +21,23 @@ func (server *Server) uploadFile(ctx *gin.Context) {
 	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
 	username := ctx.Request.PostFormValue("username")
 
+	//Obtenemos nuestra clave privada
+	clavePrivada := leerClavePrivada()
+
+	//Convertimos el cotenido recibido de base64 a bytes[]
+	usernameCifradoBytes, err := base64.Encoding.Strict(*base64.StdEncoding).DecodeString(username)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Desencriptamos con nuestra clave privada...
+	usernameDescifrado, err := RsaDecrypt(usernameCifradoBytes, []byte(clavePrivada))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
 	tokenMaker, err := token.NewJWTMaker("12345678123456781234567812345678")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
@@ -38,7 +56,7 @@ func (server *Server) uploadFile(ctx *gin.Context) {
 		return
 	}
 
-	idfolder := db.ObtenerIdFolder(username)
+	idfolder := db.ObtenerIdFolder(string(usernameDescifrado))
 	err = ctx.SaveUploadedFile(file, "ArchivosUsuarios/"+strconv.Itoa(idfolder)+"/"+file.Filename)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
@@ -68,6 +86,23 @@ func (server *Server) getNameFiles(ctx *gin.Context) {
 	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
 	username := ctx.Request.PostFormValue("username")
 
+	//Obtenemos nuestra clave privada
+	clavePrivada := leerClavePrivada()
+
+	//Convertimos el cotenido recibido de base64 a bytes[]
+	usernameCifradoBytes, err := base64.Encoding.Strict(*base64.StdEncoding).DecodeString(username)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Desencriptamos con nuestra clave privada...
+	usernameDescifrado, err := RsaDecrypt(usernameCifradoBytes, []byte(clavePrivada))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
 	tokenMaker, err := token.NewJWTMaker("12345678123456781234567812345678")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
@@ -80,7 +115,7 @@ func (server *Server) getNameFiles(ctx *gin.Context) {
 		return
 	}
 
-	idfolder := db.ObtenerIdFolder(username)
+	idfolder := db.ObtenerIdFolder(string(usernameDescifrado))
 	res := db.ObtenerArchivosUsuario(strconv.Itoa(idfolder))
 
 	rsp := uploadResponse{
@@ -96,6 +131,37 @@ func (server *Server) download(ctx *gin.Context) {
 	username := ctx.Request.PostFormValue("username")
 	idfile := ctx.Request.PostFormValue("idfile")
 
+	//Obtenemos nuestra clave privada
+	clavePrivada := leerClavePrivada()
+
+	//Convertimos el cotenido recibido de base64 a bytes[]
+	usernameCifradoBytes, err := base64.Encoding.Strict(*base64.StdEncoding).DecodeString(username)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Desencriptamos con nuestra clave privada...
+	usernameDescifrado, err := RsaDecrypt(usernameCifradoBytes, []byte(clavePrivada))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Convertimos el cotenido recibido de base64 a bytes[]
+	idfileCifradoBytes, err := base64.Encoding.Strict(*base64.StdEncoding).DecodeString(idfile)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Desencriptamos con nuestra clave privada...
+	idfileDescifrado, err := RsaDecrypt(idfileCifradoBytes, []byte(clavePrivada))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
 	tokenMaker, err := token.NewJWTMaker("12345678123456781234567812345678")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
@@ -108,8 +174,8 @@ func (server *Server) download(ctx *gin.Context) {
 		return
 	}
 
-	idfolder := db.ObtenerIdFolder(username)
-	filename := db.ObtenerFileName(idfile)
+	idfolder := db.ObtenerIdFolder(string(usernameDescifrado))
+	filename := db.ObtenerFileName(string(idfileDescifrado))
 
 	path := "ArchivosUsuarios/" + strconv.Itoa(idfolder) + "/" + filename
 	fmt.Println("El path del archivo es.. " + path)

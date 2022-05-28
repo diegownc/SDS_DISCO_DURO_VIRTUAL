@@ -26,8 +26,8 @@ function sendDataDownload(tokenUsuario, username, idfile){
         mode: 'cors',
         body: data
     })
-    .then(response => {return response})
-    .then(obj => {console.log(obj)})
+    .then(response => {return response.json()})
+    .then(obj => {alert(obj)})
 }
 
 document.getElementById("subir")
