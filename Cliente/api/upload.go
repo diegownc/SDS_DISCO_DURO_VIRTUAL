@@ -57,7 +57,6 @@ func (server *Server) upload(ctx *gin.Context) {
 
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
-	bodyWriter.WriteField("tokenUsuario", tokenUsuario)
 	bodyWriter.WriteField("username", usernameCifrado)
 	fileWriter, err := bodyWriter.CreateFormFile(fileitem.Key, fileitem.FileName)
 	if err != nil {
@@ -113,7 +112,6 @@ func (server *Server) getNameFiles(ctx *gin.Context) {
 
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
-	bodyWriter.WriteField("tokenUsuario", tokenUsuario)
 	bodyWriter.WriteField("username", usernameCifrado)
 	contentType := bodyWriter.FormDataContentType()
 	bodyWriter.Close()
@@ -170,7 +168,6 @@ func (server *Server) download(ctx *gin.Context) {
 
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
-	bodyWriter.WriteField("tokenUsuario", tokenUsuario)
 	bodyWriter.WriteField("username", usernameCifrado)
 	bodyWriter.WriteField("idfile", idfileCifrado)
 	contentType := bodyWriter.FormDataContentType()
@@ -219,4 +216,60 @@ func (server *Server) download(ctx *gin.Context) {
 	//ctx.File("temp-files/patata")
 
 	ctx.JSON(http.StatusOK, "Se ha descargado un archivo llamado "+filename)
+}
+
+func (server *Server) delete(ctx *gin.Context) {
+	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
+	username := ctx.Request.PostFormValue("username")
+	idfile := ctx.Request.PostFormValue("idfile")
+
+	clavePublica := leerClavePublica()
+
+	usernameCifradoRSA, err := RsaEncrypt([]byte(username), []byte(clavePublica))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	idfileCifradoRSA, err := RsaEncrypt([]byte(idfile), []byte(clavePublica))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Antes de enviarlo convierto el contenido a base64
+	usernameCifrado := base64.StdEncoding.EncodeToString(usernameCifradoRSA)
+	idfileCifrado := base64.StdEncoding.EncodeToString(idfileCifradoRSA)
+
+	bodyBuf := &bytes.Buffer{}
+	bodyWriter := multipart.NewWriter(bodyBuf)
+	bodyWriter.WriteField("username", usernameCifrado)
+	bodyWriter.WriteField("idfile", idfileCifrado)
+	contentType := bodyWriter.FormDataContentType()
+	bodyWriter.Close()
+
+	url := "https://localhost:8081/delete"
+	req2, err := http.NewRequest("POST", url, bodyBuf)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	req2.Header.Set("Content-Type", contentType)
+	authorizationString := "Bearer " + tokenUsuario
+	req2.Header.Set("Authorization", authorizationString)
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	resp, err := client.Do(req2)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	defer resp.Body.Close()
+
+	body, _ := ioutil.ReadAll(resp.Body)
+
+	ctx.JSON(http.StatusOK, string(body))
 }

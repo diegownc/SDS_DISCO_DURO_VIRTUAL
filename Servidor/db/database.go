@@ -238,3 +238,20 @@ func ObtenerFileName(idfile string) string {
 
 	return filenameDB
 }
+
+func EliminarFileName(idfile string) bool {
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
+	checkError(err)
+	defer db.Close()
+
+	sqlStatement := `DELETE FROM files where idfile=$1`
+	_, err = db.Exec(sqlStatement, idfile)
+
+	if err != nil {
+		fmt.Println(err.Error())
+		return false
+	}
+
+	return true
+}

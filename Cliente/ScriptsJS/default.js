@@ -49,56 +49,115 @@ function getData(tokenUsuario, username){
 
  
 function printUserFiles( response ) {
+    try{
+        //ya existia la tabla...
+        document.getElementById("files").value; //provocamos una excepcion
+        var tableexists = document.getElementById("files")
+        tableexists.remove()
+    }catch{
+        //Creamos la tabla por primera vez...
+        console.log("No existia");
+    }
+    
     let json = JSON.parse(response);
     fileList = json.msg
 
-    fileList = fileList.replaceAll(")", "")
-    fileList = fileList.replaceAll( "(", "")
+    if(fileList != ""){    
+        fileList = fileList.replaceAll(")", "")
+        fileList = fileList.replaceAll( "(", "")
 
-    
-    arrayData = fileList.split(",")
-    
-
-    var arrayFiles = []
-    var arrayIds = [ ]   
-    arrayData.forEach( function(entry){
-        if( isNaN(entry))
-            arrayFiles.push(entry)
-        else    
-            arrayIds.push(entry)    
-    } )
-
-  
-
-    var newDiv = document.createElement("div")
-    newDiv.setAttribute( 'id'  , 'files ');
-    newDiv.setAttribute( 'class' ,  'files')
-    for(let i = 0; i  < arrayFiles.length ; i++){
         
-        var individualDiv = document.createElement("div")
-        individualDiv.setAttribute( 'id'  ,  arrayFiles[i])  
+        arrayData = fileList.split(",")
+        
 
-        var newText = document.createTextNode(arrayFiles[i])
-        individualDiv.appendChild(newText)
+        var arrayFiles = []
+        var arrayIds = [ ]   
+        arrayData.forEach( function(entry){
+            if( isNaN(entry))
+                arrayFiles.push(entry)
+            else    
+                arrayIds.push(entry)    
+        } )
 
-        var newButton = document.createElement("button")
-        newButton.setAttribute( 'id'  ,  arrayIds[i]);
-        newButton.setAttribute( 'class' ,  'button')
-        newButton.textContent = 'Descargar';
-        newButton.addEventListener("click", function () {
+    
+
+        var table = document.createElement("table")
+        table.setAttribute( 'id'  , 'files');
+        table.setAttribute( 'class' ,  'files');
+        table.setAttribute( 'align' ,  'center');
+        
+        var tr = document.createElement("tr");
+        var td1 = document.createElement("td");
+        var newText = document.createElement("label");
+        newText.setAttribute( 'class' , 'titleTable');
+        newText.textContent = "Nombre del archivo";
+        td1.appendChild(newText);
+
+        var td2 = document.createElement("td")
+        newText = document.createElement("label")
+        newText.setAttribute( 'class' , 'titleTable')
+        newText.textContent = "Descargar"
+        td2.appendChild(newText);
+
+
+        var td3 = document.createElement("td")
+        newText = document.createElement("label")
+        newText.setAttribute( 'class' , 'titleTable')
+        newText.textContent = "Eliminar"
+        td3.appendChild(newText);
+
+
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        tr.appendChild(td3);
+        table.appendChild(tr);
+        
+        for(let i = 0; i  < arrayFiles.length ; i++){
+            tr = document.createElement("tr");
+            td1 = document.createElement("td");
+
+            newText = document.createTextNode(arrayFiles[i])
+            td1.appendChild(newText);
+
+            td2 = document.createElement("td")
+
+            var newButton = document.createElement("img")
+            newButton.setAttribute( 'src'  ,  "img/file.png");
+            newButton.setAttribute( 'width'  ,  "30px");
+            newButton.setAttribute( 'height'  ,  "30px");        
+            newButton.addEventListener("click", function () {
+                let tokenUsuario = document.getElementById("tokenUsuario").value;
+                let username = document.getElementById("usernameLogin").value;
             
-            let tokenUsuario = document.getElementById("tokenUsuario").value;
-            let username = document.getElementById("usernameLogin").value;
-        
-            sendDataDownload(tokenUsuario, username, arrayIds[i]);
-        });
-        individualDiv.appendChild(newButton)
+                sendDataDownload(tokenUsuario, username, arrayIds[i]);
+            });
+            td2.appendChild(newButton);
 
-        newDiv.appendChild(individualDiv)
-    }
-    var currentDiv = document.getElementById("uploadFile" + '\n')
-    document.body.insertBefore(newDiv, currentDiv)
-    
+            
+            td3 = document.createElement("td")
+
+            var newButton = document.createElement("img")
+            newButton.setAttribute( 'src'  ,  "img/delete.png");
+            newButton.setAttribute( 'width'  ,  "30px");
+            newButton.setAttribute( 'height'  ,  "30px");        
+            newButton.addEventListener("click", function () {
+                let tokenUsuario = document.getElementById("tokenUsuario").value;
+                let username = document.getElementById("usernameLogin").value;
+            
+                sendDataDelete(tokenUsuario, username, arrayIds[i]);
+                getData(document.getElementById("tokenUsuario").value,  document.getElementById("usernameLogin").value);
+            });
+            td3.appendChild(newButton);
+
+            tr.appendChild(td1);
+            tr.appendChild(td2);
+            tr.appendChild(td3);
+            
+            table.appendChild(tr);
+        }
+        var currentDiv = document.getElementById("uploadFile" + '\n')
+        document.body.insertBefore(table, currentDiv)
+    } 
 }
 
 document.getElementById("registrar")

@@ -30,6 +30,23 @@ function sendDataDownload(tokenUsuario, username, idfile){
     .then(obj => {alert(obj)})
 }
 
+
+function sendDataDelete(tokenUsuario, username, idfile){
+    var data = new FormData()
+    data.append('tokenUsuario', tokenUsuario)
+    data.append('username', username)
+    data.append('idfile', idfile)
+
+    const url_web = 'http://localhost:8080/delete';
+    fetch(url_web, {
+        method: 'POST',
+        mode: 'cors',
+        body: data
+    })
+    .then(response => {return response.json()})
+    .then(obj => {console.log(obj)})
+}
+
 document.getElementById("subir")
 .addEventListener("click", (evt) =>{
     evt.preventDefault();
