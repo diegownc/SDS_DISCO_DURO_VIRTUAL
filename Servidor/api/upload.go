@@ -205,3 +205,79 @@ func (server *Server) delete(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, rsp)
 }
+
+func (server *Server) getComment(ctx *gin.Context) {
+	idfile := ctx.Request.PostFormValue("idfile")
+
+	//Obtenemos nuestra clave privada
+	clavePrivada := leerClavePrivada()
+
+	//Convertimos el cotenido recibido de base64 a bytes[]
+	idfileCifradoBytes, err := base64.Encoding.Strict(*base64.StdEncoding).DecodeString(idfile)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Desencriptamos con nuestra clave privada...
+	idfileDescifrado, err := RsaDecrypt(idfileCifradoBytes, []byte(clavePrivada))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	comment := db.ObtenerComment(string(idfileDescifrado))
+
+	ctx.JSON(http.StatusOK, comment)
+}
+
+func (server *Server) updateComment(ctx *gin.Context) {
+	idfile := ctx.Request.PostFormValue("idfile")
+	comment := ctx.Request.PostFormValue("comment")
+
+	//Obtenemos nuestra clave privada
+	clavePrivada := leerClavePrivada()
+
+	//Convertimos el cotenido recibido de base64 a bytes[]
+	idfileCifradoBytes, err := base64.Encoding.Strict(*base64.StdEncoding).DecodeString(idfile)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Desencriptamos con nuestra clave privada...
+	idfileDescifrado, err := RsaDecrypt(idfileCifradoBytes, []byte(clavePrivada))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Convertimos el cotenido recibido de base64 a bytes[]
+	commentCifradoBytes, err := base64.Encoding.Strict(*base64.StdEncoding).DecodeString(comment)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Desencriptamos con nuestra clave privada...
+	commentDescifrado, err := RsaDecrypt(commentCifradoBytes, []byte(clavePrivada))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	done := db.ModificarComment(string(idfileDescifrado), string(commentDescifrado))
+	if !done {
+		rsp := uploadResponse{
+			Result: false,
+			Msg:    "No se ha podido modificar",
+		}
+		ctx.JSON(http.StatusBadRequest, rsp)
+		return
+	}
+	rsp := uploadResponse{
+		Result: true,
+		Msg:    "Modificado correctamente",
+	}
+	ctx.JSON(http.StatusOK, rsp)
+}

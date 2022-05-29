@@ -354,6 +354,7 @@ func (server *Server) getFileProperties(ctx *gin.Context) {
 		return
 	}
 
+	//Obtenemos el contenido....
 	var text string
 	fileContent, err := ioutil.ReadFile("temp-files/" + filename)
 	if err != nil {
@@ -362,13 +363,96 @@ func (server *Server) getFileProperties(ctx *gin.Context) {
 	}
 	text = string(fileContent)
 
+	//Obtenemos el comentario del archivo...
+	bodyBuf2 := &bytes.Buffer{}
+	bodyWriter2 := multipart.NewWriter(bodyBuf2)
+	bodyWriter2.WriteField("idfile", idfileCifrado)
+	contentType2 := bodyWriter2.FormDataContentType()
+	bodyWriter2.Close()
+
+	url2 := "https://localhost:8081/getComment"
+	req3, err := http.NewRequest("POST", url2, bodyBuf2)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	req3.Header.Set("Content-Type", contentType2)
+	req3.Header.Set("Authorization", authorizationString)
+
+	client2 := &http.Client{Transport: tr}
+	resp2, err := client2.Do(req3)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	defer resp2.Body.Close()
+
+	body2, _ := ioutil.ReadAll(resp2.Body)
+
+	fmt.Println(string(body2))
 	rsp := FileResponse{
 		Result:  true,
 		Path:    "temp-files/" + filename,
 		Size:    int(fileSize),
-		Comment: "Comentario test",
+		Comment: string(body2),
 		Content: text,
 	}
 
 	ctx.JSON(http.StatusOK, rsp)
+}
+
+func (server *Server) updateComment(ctx *gin.Context) {
+	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
+	comment := ctx.Request.PostFormValue("comment")
+	idfile := ctx.Request.PostFormValue("idfile")
+
+	clavePublica := leerClavePublica()
+
+	commentCifradoRSA, err := RsaEncrypt([]byte(comment), []byte(clavePublica))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	idfileCifradoRSA, err := RsaEncrypt([]byte(idfile), []byte(clavePublica))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Antes de enviarlo convierto el contenido a base64
+	commentCifrado := base64.StdEncoding.EncodeToString(commentCifradoRSA)
+	idfileCifrado := base64.StdEncoding.EncodeToString(idfileCifradoRSA)
+
+	bodyBuf := &bytes.Buffer{}
+	bodyWriter := multipart.NewWriter(bodyBuf)
+	bodyWriter.WriteField("comment", commentCifrado)
+	bodyWriter.WriteField("idfile", idfileCifrado)
+	contentType := bodyWriter.FormDataContentType()
+	bodyWriter.Close()
+
+	url := "https://localhost:8081/updateComment"
+	req2, err := http.NewRequest("POST", url, bodyBuf)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	req2.Header.Set("Content-Type", contentType)
+	authorizationString := "Bearer " + tokenUsuario
+	req2.Header.Set("Authorization", authorizationString)
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	resp, err := client.Do(req2)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	defer resp.Body.Close()
+
+	body, _ := ioutil.ReadAll(resp.Body)
+
+	ctx.JSON(http.StatusOK, string(body))
 }

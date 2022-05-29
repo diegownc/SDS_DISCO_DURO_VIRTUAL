@@ -67,10 +67,11 @@ function sendDataFile(tokenUsuario, username, idfile){
         document.getElementById("uploadFile").style.display = "none";
         document.getElementById("files").style.display = "none";
         document.getElementById("view_File").style.display = "block";
-        document.getElementById("view_size").value = obj.size;
-        document.getElementById("view_comment").value = obj.comment;
+        document.getElementById("view_size").value = obj.size + " bytes";
         document.getElementById("view_img").src = obj.path;
         document.getElementById("view_txt").value = obj.content;
+        let comment = obj.comment.replaceAll('"', '')
+        document.getElementById("view_comment").value = comment;
     })
 }
 
@@ -90,6 +91,22 @@ function sendDataDelete(tokenUsuario, username, idfile){
     .then(response => {return response.json()})
     .then(obj => {
         getData(document.getElementById("tokenUsuario").value,  document.getElementById("usernameLogin").value);})
+}
+
+function sendDataUpdateComment(tokenUsuario, idfile, comment){
+    var data = new FormData()
+    data.append('tokenUsuario', tokenUsuario)
+    data.append('comment', comment)
+    data.append('idfile', idfile)
+
+    const url_web = 'http://localhost:8080/updateComment';
+    fetch(url_web, {
+        method: 'POST',
+        mode: 'cors',
+        body: data
+    })
+    .then(response => {return response.json()})
+    .then(obj => {document.getElementById("view_comment").value = comment; console.log(obj)})
 }
 
 function printUserFiles( response ) {
@@ -202,6 +219,7 @@ function printUserFiles( response ) {
             newButton.addEventListener("click", function () {
                 let tokenUsuario = document.getElementById("tokenUsuario").value;
                 let username = document.getElementById("usernameLogin").value;
+                document.getElementById("view_id").value = arrayIds[i];
                 
                 sendDataFile(tokenUsuario, username, arrayIds[i]);
                 document.getElementById("view_filename").value = arrayFiles[i];
@@ -248,4 +266,14 @@ document.getElementById("view_buttonback")
     document.getElementById("files").style.display = "block";
     
     
+})
+
+document.getElementById("view_save")
+.addEventListener("click", (evt) =>{
+    evt.preventDefault();
+
+    let tokenUsuario = document.getElementById("tokenUsuario").value;
+    let comment = document.getElementById("view_comment").value;
+    let idfile = document.getElementById("view_id").value
+    sendDataUpdateComment(tokenUsuario, idfile, comment)
 })

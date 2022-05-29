@@ -28,6 +28,9 @@ func NewServer() *Server {
 	authRoutes.POST("/upload", server.uploadFile)
 	authRoutes.POST("/download", server.download)
 	authRoutes.POST("/delete", server.delete)
+	authRoutes.POST("/getComment", server.getComment)
+	authRoutes.POST("/updateComment", server.updateComment)
+
 	server.router = router
 	return server
 }

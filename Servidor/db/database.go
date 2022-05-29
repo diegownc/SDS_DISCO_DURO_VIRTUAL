@@ -255,3 +255,40 @@ func EliminarFileName(idfile string) bool {
 
 	return true
 }
+
+func ObtenerComment(idfile string) string {
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
+	checkError(err)
+	defer db.Close()
+
+	rows, err := db.Query("Select comment from files where idfile=" + idfile)
+	checkError(err)
+
+	defer rows.Close()
+
+	var comment string
+	if rows.Next() {
+		err := rows.Scan(&comment)
+		checkError(err)
+	}
+
+	return comment
+}
+
+func ModificarComment(idfile string, comment string) bool {
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
+	checkError(err)
+	defer db.Close()
+
+	sqlStatement := `Update files files set comment=$1 where idfile=$2`
+	_, err = db.Exec(sqlStatement, comment, idfile)
+
+	if err != nil {
+		fmt.Println(err.Error())
+		return false
+	}
+
+	return true
+}
