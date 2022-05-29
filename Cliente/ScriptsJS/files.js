@@ -40,15 +40,5 @@ document.getElementById("subir")
     sendDataUpload(tokenUsuario, username);
 })
 
-
-document.getElementById("descargar")
-.addEventListener("click", (evt) =>{
-    evt.preventDefault();
-
-    let tokenUsuario = document.getElementById("tokenUsuario").value;
-    let username = document.getElementById("usernameLogin").value;
-
-    sendDataDownload(tokenUsuario, username, 4);
-})
-
+ 
 

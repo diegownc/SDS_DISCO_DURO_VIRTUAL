@@ -86,6 +86,13 @@ function printUserFiles( response ) {
         newButton.setAttribute( 'id'  ,  arrayIds[i]);
         newButton.setAttribute( 'class' ,  'button')
         newButton.textContent = 'Descargar';
+        newButton.addEventListener("click", function () {
+            
+            let tokenUsuario = document.getElementById("tokenUsuario").value;
+            let username = document.getElementById("usernameLogin").value;
+        
+            sendDataDownload(tokenUsuario, username, arrayIds[i]);
+        });
         individualDiv.appendChild(newButton)
 
         newDiv.appendChild(individualDiv)
