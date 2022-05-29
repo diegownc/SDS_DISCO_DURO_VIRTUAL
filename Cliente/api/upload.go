@@ -22,6 +22,14 @@ type FileItemRequest struct {
 	Content  []byte
 }
 
+type FileResponse struct {
+	Result  bool   `json:"result"`
+	Path    string `json:"path"`
+	Size    int    `json:"size"`
+	Comment string `json:"comment"`
+	Content string `json:"content"`
+}
+
 func (server *Server) upload(ctx *gin.Context) {
 	file, fileheader, err := ctx.Request.FormFile("file")
 	if err != nil {
@@ -272,4 +280,95 @@ func (server *Server) delete(ctx *gin.Context) {
 	body, _ := ioutil.ReadAll(resp.Body)
 
 	ctx.JSON(http.StatusOK, string(body))
+}
+
+func (server *Server) getFileProperties(ctx *gin.Context) {
+	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
+	username := ctx.Request.PostFormValue("username")
+	idfile := ctx.Request.PostFormValue("idfile")
+
+	clavePublica := leerClavePublica()
+
+	usernameCifradoRSA, err := RsaEncrypt([]byte(username), []byte(clavePublica))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	idfileCifradoRSA, err := RsaEncrypt([]byte(idfile), []byte(clavePublica))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Antes de enviarlo convierto el contenido a base64
+	usernameCifrado := base64.StdEncoding.EncodeToString(usernameCifradoRSA)
+	idfileCifrado := base64.StdEncoding.EncodeToString(idfileCifradoRSA)
+
+	bodyBuf := &bytes.Buffer{}
+	bodyWriter := multipart.NewWriter(bodyBuf)
+	bodyWriter.WriteField("username", usernameCifrado)
+	bodyWriter.WriteField("idfile", idfileCifrado)
+	contentType := bodyWriter.FormDataContentType()
+	bodyWriter.Close()
+
+	url := "https://localhost:8081/download"
+	req2, err := http.NewRequest("POST", url, bodyBuf)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	req2.Header.Set("Content-Type", contentType)
+	authorizationString := "Bearer " + tokenUsuario
+	req2.Header.Set("Authorization", authorizationString)
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	resp, err := client.Do(req2)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	defer resp.Body.Close()
+
+	filename := "archivo" + strconv.Itoa(time.Now().Nanosecond()) + strconv.Itoa(time.Now().Second())
+	file, err := os.Create("temp-files/" + filename) // crea el fichero de destino (servidor)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	defer file.Close() // cierra el fichero al salir de ámbito
+
+	//Guardamos en file el contenido de lo que devuelve el servidor
+	io.Copy(file, resp.Body) // copia desde el Body del request al fichero con streaming
+
+	var fileSize int64
+	fileStat, err := file.Stat()
+	if err == nil {
+		fileSize = fileStat.Size()
+	} else {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	var text string
+	fileContent, err := ioutil.ReadFile("temp-files/" + filename)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+	text = string(fileContent)
+
+	rsp := FileResponse{
+		Result:  true,
+		Path:    "temp-files/" + filename,
+		Size:    int(fileSize),
+		Comment: "Comentario test",
+		Content: text,
+	}
+
+	ctx.JSON(http.StatusOK, rsp)
 }

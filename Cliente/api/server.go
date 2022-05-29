@@ -22,6 +22,7 @@ func NewServer() *Server {
 	router.POST("/nameFiles", server.getNameFiles)
 	router.POST("/download", server.download)
 	router.POST("/delete", server.delete)
+	router.POST("/getFileProperties", server.getFileProperties)
 
 	server.router = router
 	return server

@@ -35,7 +35,7 @@
                 </tr>
                 <tr>
                     <td><label for="password" > Contrasena: </label></td>
-                    <td><input type="text" id="password"></td>
+                    <td><input type="password" id="password"></td>
                 </tr>
                 <tr>
                     <td> <button id="registrar"> Registrarse </button> </td>
@@ -43,7 +43,40 @@
                 </tr>
             </table>
         </div>
-       
+        
+        <div id="view_File" style="display:none">
+            <table align="center" style="padding-top:10%; border-spacing:15px;">
+                <tr>
+                    <td> 
+                        <img src="img/delete.png" width="300px" height="300px" id="view_img" style="display:none"> 
+                        <textarea id="view_txt" cols="50" rows="25"> </textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td> <label> Nombre del archivo: </label></td>
+                    <td> <input type="text" id="view_filename"> </td>
+                </tr>
+                <tr>
+                    <td> <label> Tamano: </label></td>
+                    <td> <input type="text" id="view_size"> </td>
+                </tr>
+
+                <tr>
+                    <td> <label> Comentarios: </label></td>
+                    <td> <input type="text" id="view_comment"> </td>
+                    <td>  <button id="view_save"> Guardar Comentario </button> </td>                    
+                </tr>
+                <tr>
+                    <td> 
+                        <button id="view_buttontxt"> Vista Previa como Fichero de Texto</button> 
+                        <button id="view_buttonimg"> Vista Previa como Imagen</button>  
+                        <button id="view_buttonback"> VOLVER ATRÁS </button>  
+                    </td>
+                    
+                </tr>
+            </table>
+        </div>
+
         <div id="uploadFile" style="display:none">
             <table align="center" style="padding-top:10%; border-spacing:15px;">
                 <tr>
