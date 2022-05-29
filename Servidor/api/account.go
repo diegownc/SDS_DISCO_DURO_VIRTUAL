@@ -13,7 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const AccessTokenDuration = time.Duration(time.Minute)
+const AccessTokenDuration = time.Duration(time.Hour)
 
 type loginRequest struct {
 	User     string `form:"username" json:"username" xml:"username" binding:"required"`

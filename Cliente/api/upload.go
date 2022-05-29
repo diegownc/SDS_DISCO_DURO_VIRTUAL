@@ -203,7 +203,7 @@ func (server *Server) download(ctx *gin.Context) {
 	defer resp.Body.Close()
 
 	filename := "archivo" + strconv.Itoa(time.Now().Nanosecond()) + strconv.Itoa(time.Now().Second())
-	file, err := os.Create("temp-files/" + filename) // crea el fichero de destino (servidor)
+	file, err := os.Create("Descargas/" + filename) // crea el fichero de destino (servidor)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
