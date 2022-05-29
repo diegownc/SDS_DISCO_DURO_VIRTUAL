@@ -11,7 +11,7 @@ function sendDataUpload(tokenUsuario, username){
         body: data
     })
     .then(response => {return response.json()})
-    .then(obj => {console.log(obj)})
+    .then(obj => { })
 }
 
 function sendDataDownload(tokenUsuario, username, idfile){

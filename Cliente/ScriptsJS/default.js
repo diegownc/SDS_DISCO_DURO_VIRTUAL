@@ -28,7 +28,7 @@ function sendData(username, password, accion){
                 alert(json.msg)
             }
         }
-        console.log(json);});
+       ;});
 }
 
 function getData(tokenUsuario, username){ 
@@ -55,9 +55,9 @@ function printUserFiles( response ) {
     fileList = fileList.replaceAll(")", "")
     fileList = fileList.replaceAll( "(", "")
 
-    console.log(fileList)
+    
     arrayData = fileList.split(",")
-    console.log(arrayData)
+    
 
     var arrayFiles = []
     var arrayIds = [ ]   
@@ -68,8 +68,7 @@ function printUserFiles( response ) {
             arrayIds.push(entry)    
     } )
 
-    console.log(arrayFiles)
-    console.log(arrayIds)
+  
 
     var newDiv = document.createElement("div")
     newDiv.setAttribute( 'id'  , 'files ');
