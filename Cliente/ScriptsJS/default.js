@@ -44,7 +44,55 @@ function getData(tokenUsuario, username){
         body: data
     })
     .then(response => {return response.json()})
-    .then(obj => {console.log(obj)})
+    .then(obj => {printUserFiles(obj)})
+}
+
+ 
+function printUserFiles( response ) {
+    let json = JSON.parse(response);
+    fileList = json.msg
+
+    fileList = fileList.replaceAll(")", "")
+    fileList = fileList.replaceAll( "(", "")
+
+    console.log(fileList)
+    arrayData = fileList.split(",")
+    console.log(arrayData)
+
+    var arrayFiles = []
+    var arrayIds = [ ]   
+    arrayData.forEach( function(entry){
+        if( isNaN(entry))
+            arrayFiles.push(entry)
+        else    
+            arrayIds.push(entry)    
+    } )
+
+    console.log(arrayFiles)
+    console.log(arrayIds)
+
+    var newDiv = document.createElement("div")
+    newDiv.setAttribute( 'id'  , 'files ');
+    newDiv.setAttribute( 'class' ,  'files')
+    for(let i = 0; i  < arrayFiles.length ; i++){
+        
+        var individualDiv = document.createElement("div")
+        individualDiv.setAttribute( 'id'  ,  arrayFiles[i])  
+
+        var newText = document.createTextNode(arrayFiles[i])
+        individualDiv.appendChild(newText)
+
+        var newButton = document.createElement("button")
+        newButton.setAttribute( 'id'  ,  arrayIds[i]);
+        newButton.setAttribute( 'class' ,  'button')
+        newButton.textContent = 'Descargar';
+        individualDiv.appendChild(newButton)
+
+        newDiv.appendChild(individualDiv)
+    }
+    var currentDiv = document.getElementById("uploadFile" + '\n')
+    document.body.insertBefore(newDiv, currentDiv)
+    
 }
 
 document.getElementById("registrar")
