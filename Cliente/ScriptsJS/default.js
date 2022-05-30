@@ -23,7 +23,7 @@ function sendData(username, password, accion){
                 document.getElementById("usernameLogin").value = document.getElementById("username").value
                 document.getElementById("inicio").style.display = "none"
                 document.getElementById("uploadFile").style.display = "block"
-                getData(document.getElementById("tokenUsuario").value,  document.getElementById("usernameLogin").value)
+                getData(document.getElementById("tokenUsuario").value,  document.getElementById("usernameLogin").value, 0, -1)
             }else{
                 alert(json.msg)
             }

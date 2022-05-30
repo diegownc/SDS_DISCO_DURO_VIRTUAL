@@ -2,7 +2,7 @@ package api
 
 import (
 	"encoding/base64"
-	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -44,14 +44,9 @@ func (server *Server) uploadFile(ctx *gin.Context) {
 	}
 
 	idfolder := db.ObtenerIdFolder(string(usernameDescifrado))
-	err = ctx.SaveUploadedFile(file, "ArchivosUsuarios/"+strconv.Itoa(idfolder)+"/"+file.Filename)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
 
 	//Almacenamos en base de datos el nombre del archivo..
-	res := db.RegistrarArchivo(file.Filename, "", idfolder)
+	res, versionado, version := db.RegistrarArchivo(file.Filename, "", idfolder)
 	if !res {
 		rsp := registryResponse{
 			Result: res,
@@ -61,15 +56,57 @@ func (server *Server) uploadFile(ctx *gin.Context) {
 		return
 	}
 
+	var msg string
+
+	if versionado {
+		//Es la segunda vez que se almacena el archivo...
+		// leer datos de origen
+		origen, err := os.Open("ArchivosUsuarios/" + strconv.Itoa(idfolder) + "/" + file.Filename)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, errorResponse(err))
+			return
+		}
+		defer origen.Close()
+		// crea un nuevo archivo
+
+		destino, err := os.OpenFile("ArchivosUsuarios/"+strconv.Itoa(idfolder)+"/versiones/"+file.Filename+strconv.Itoa(version), os.O_RDWR|os.O_CREATE, 0666)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, errorResponse(err))
+			return
+		}
+		// cierra el archivo "destino.txt" al terminar programa
+		defer destino.Close()
+		// copiar datos
+		_, err = io.Copy(destino, origen)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, errorResponse(err))
+			return
+		}
+
+		msg = "Almacenado correctamente, además se ha guardado en el historial de versiones el anterior archivo"
+
+	} else {
+		msg = "Almacenado correctamente"
+	}
+
+	//Es la primera vez que se almacena el archivo
+	err = ctx.SaveUploadedFile(file, "ArchivosUsuarios/"+strconv.Itoa(idfolder)+"/"+file.Filename)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
 	rsp := registryResponse{
 		Result: res,
-		Msg:    "Almacenado correctamente.",
+		Msg:    msg,
 	}
 	ctx.JSON(http.StatusOK, rsp)
 }
 
 func (server *Server) getNameFiles(ctx *gin.Context) {
 	username := ctx.Request.PostFormValue("username")
+	esversion := ctx.Request.PostFormValue("esversion")
+	idfile := ctx.Request.PostFormValue("idfile")
 
 	//Obtenemos nuestra clave privada
 	clavePrivada := leerClavePrivada()
@@ -88,8 +125,44 @@ func (server *Server) getNameFiles(ctx *gin.Context) {
 		return
 	}
 
-	idfolder := db.ObtenerIdFolder(string(usernameDescifrado))
-	res := db.ObtenerArchivosUsuario(strconv.Itoa(idfolder))
+	//Convertimos el cotenido recibido de base64 a bytes[]
+	esversionCifradoBytes, err := base64.Encoding.Strict(*base64.StdEncoding).DecodeString(esversion)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Desencriptamos con nuestra clave privada...
+	esversionDescifrado, err := RsaDecrypt(esversionCifradoBytes, []byte(clavePrivada))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Convertimos el cotenido recibido de base64 a bytes[]
+	idfileCifradoBytes, err := base64.Encoding.Strict(*base64.StdEncoding).DecodeString(idfile)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Desencriptamos con nuestra clave privada...
+	idfileDescifrado, err := RsaDecrypt(idfileCifradoBytes, []byte(clavePrivada))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	var res string
+
+	if string(esversionDescifrado) == "1" {
+		res = db.ObtenerArchivosUsuarioVersiones(string(idfileDescifrado))
+
+	} else {
+		idfolder := db.ObtenerIdFolder(string(usernameDescifrado))
+		res = db.ObtenerArchivosUsuario(strconv.Itoa(idfolder))
+
+	}
 
 	rsp := uploadResponse{
 		Result: true,
@@ -102,6 +175,7 @@ func (server *Server) download(ctx *gin.Context) {
 
 	username := ctx.Request.PostFormValue("username")
 	idfile := ctx.Request.PostFormValue("idfile")
+	esversion := ctx.Request.PostFormValue("esversion")
 
 	//Obtenemos nuestra clave privada
 	clavePrivada := leerClavePrivada()
@@ -134,11 +208,30 @@ func (server *Server) download(ctx *gin.Context) {
 		return
 	}
 
-	idfolder := db.ObtenerIdFolder(string(usernameDescifrado))
-	filename := db.ObtenerFileName(string(idfileDescifrado))
+	//Convertimos el cotenido recibido de base64 a bytes[]
+	esversionCifradoBytes, err := base64.Encoding.Strict(*base64.StdEncoding).DecodeString(esversion)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
 
-	path := "ArchivosUsuarios/" + strconv.Itoa(idfolder) + "/" + filename
-	fmt.Println("El path del archivo es.. " + path)
+	//Desencriptamos con nuestra clave privada...
+	esversionDescifrado, err := RsaDecrypt(esversionCifradoBytes, []byte(clavePrivada))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	idfolder := db.ObtenerIdFolder(string(usernameDescifrado))
+
+	var path string
+	if string(esversionDescifrado) == "1" {
+		filename := db.ObtenerFileNameVersion(string(idfileDescifrado))
+		path = "ArchivosUsuarios/" + strconv.Itoa(idfolder) + "/versiones/" + filename
+	} else {
+		filename := db.ObtenerFileName(string(idfileDescifrado))
+		path = "ArchivosUsuarios/" + strconv.Itoa(idfolder) + "/" + filename
+	}
 
 	ctx.Status(http.StatusOK)
 	ctx.File(path)
@@ -147,6 +240,7 @@ func (server *Server) download(ctx *gin.Context) {
 func (server *Server) delete(ctx *gin.Context) {
 	username := ctx.Request.PostFormValue("username")
 	idfile := ctx.Request.PostFormValue("idfile")
+	esversion := ctx.Request.PostFormValue("esversion")
 
 	//Obtenemos nuestra clave privada
 	clavePrivada := leerClavePrivada()
@@ -179,18 +273,34 @@ func (server *Server) delete(ctx *gin.Context) {
 		return
 	}
 
-	idfolder := db.ObtenerIdFolder(string(usernameDescifrado))
-	filename := db.ObtenerFileName(string(idfileDescifrado))
-
-	path := "ArchivosUsuarios/" + strconv.Itoa(idfolder) + "/" + filename
-
-	err = os.Remove(path)
+	//Convertimos el cotenido recibido de base64 a bytes[]
+	esversionCifradoBytes, err := base64.Encoding.Strict(*base64.StdEncoding).DecodeString(esversion)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
 
-	done := db.EliminarFileName(string(idfileDescifrado))
+	//Desencriptamos con nuestra clave privada...
+	esversionDescifrado, err := RsaDecrypt(esversionCifradoBytes, []byte(clavePrivada))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	var path string
+	var done bool
+	idfolder := db.ObtenerIdFolder(string(usernameDescifrado))
+
+	if string(esversionDescifrado) == "1" {
+		filename := db.ObtenerFileNameVersion(string(idfileDescifrado))
+		path = "ArchivosUsuarios/" + strconv.Itoa(idfolder) + "/versiones/" + filename
+		done = db.EliminarFileNameVersion(string(idfileDescifrado))
+	} else {
+		filename := db.ObtenerFileName(string(idfileDescifrado))
+		path = "ArchivosUsuarios/" + strconv.Itoa(idfolder) + "/" + filename
+		done = db.EliminarFileName(string(idfileDescifrado))
+	}
+
 	if !done {
 		rsp := uploadResponse{
 			Result: false,
@@ -203,6 +313,13 @@ func (server *Server) delete(ctx *gin.Context) {
 		Result: true,
 		Msg:    "Eliminado correctamente",
 	}
+
+	err = os.Remove(path)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
 	ctx.JSON(http.StatusOK, rsp)
 }
 

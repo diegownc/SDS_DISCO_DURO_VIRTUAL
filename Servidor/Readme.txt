@@ -29,12 +29,23 @@ idfolder integer,
 idfile serial,
 constraint pk_file primary key (idfile));
 
+create table filesversion(
+filename character varying (255) not null,
+idfolder integer,
+idfile integer,
+version integer,
+id serial,
+constraint pk_fileversion primary key (id));
+
+
 //Establecemos los permisos
 grant select, insert on table users to normaluser;
 grant delete, select, insert on table files to normaluser;
+grant delete, select, insert on table filesversion to normaluser;
 
 grant usage, select on sequence users_idfolder_seq to normaluser;
 grant usage, select on sequence files_idfile_seq to normaluser;
+grant usage, select on sequence filesversion_id_seq to normaluser;
 
 //////////////////////////////////////////////////////7
 Pasos para ejecutar este programa

@@ -1,9 +1,11 @@
 
-function getData(tokenUsuario, username){ 
+function getData(tokenUsuario, username, esversion, idfile){ 
     var data = new FormData()
  
-    data.append('tokenUsuario', tokenUsuario)
-    data.append('username', username)
+    data.append('tokenUsuario', tokenUsuario);
+    data.append('username', username);
+    data.append('esversion', esversion);
+    data.append('idfile', idfile)
     
     const url_web = 'http://localhost:8080/nameFiles';
     fetch(url_web, {
@@ -12,7 +14,13 @@ function getData(tokenUsuario, username){
         body: data
     })
     .then(response => {return response.json()})
-    .then(obj => {printUserFiles(obj)})
+    .then(obj => {
+        if (esversion == 0) {
+            printUserFiles(obj)
+        }else{
+            printUserFilesVersiones(obj)
+        }
+    })
 }
 
  
@@ -31,14 +39,17 @@ function sendDataUpload(tokenUsuario, username){
     })
     .then(response => {return response.json()})
     .then(obj => { 
-        getData(document.getElementById("tokenUsuario").value,  document.getElementById("usernameLogin").value);})
+        let json = JSON.parse(obj);
+        alert(json.msg);
+        getData(document.getElementById("tokenUsuario").value,  document.getElementById("usernameLogin").value, 0, -1)})
 }
 
-function sendDataDownload(tokenUsuario, username, idfile){
+function sendDataDownload(tokenUsuario, username, idfile, esversion){
     var data = new FormData()
     data.append('tokenUsuario', tokenUsuario)
     data.append('username', username)
     data.append('idfile', idfile)
+    data.append('esversion', esversion)
 
     const url_web = 'http://localhost:8080/download';
     fetch(url_web, {
@@ -76,12 +87,13 @@ function sendDataFile(tokenUsuario, username, idfile){
 }
 
 
-function sendDataDelete(tokenUsuario, username, idfile){
+function sendDataDelete(tokenUsuario, username, idfile, esversion){
     var data = new FormData()
-    data.append('tokenUsuario', tokenUsuario)
-    data.append('username', username)
-    data.append('idfile', idfile)
-
+    data.append('tokenUsuario', tokenUsuario);
+    data.append('username', username);
+    data.append('idfile', idfile);
+    data.append('esversion', esversion);
+    
     const url_web = 'http://localhost:8080/delete';
     fetch(url_web, {
         method: 'POST',
@@ -90,7 +102,12 @@ function sendDataDelete(tokenUsuario, username, idfile){
     })
     .then(response => {return response.json()})
     .then(obj => {
-        getData(document.getElementById("tokenUsuario").value,  document.getElementById("usernameLogin").value);})
+        if(esversion == 1){
+            getData(document.getElementById("tokenUsuario").value,  document.getElementById("usernameLogin").value, 1, idfile);
+        }else{
+            getData(document.getElementById("tokenUsuario").value,  document.getElementById("usernameLogin").value, 0, -1);
+        }
+    })
 }
 
 function sendDataUpdateComment(tokenUsuario, idfile, comment){
@@ -112,11 +129,17 @@ function sendDataUpdateComment(tokenUsuario, idfile, comment){
 function printUserFiles( response ) {
     try{
         //ya existia la tabla...
+        document.getElementById("filesversiones").value; //provocamos una excepcion
+        var tableexists2 = document.getElementById("filesversiones");
+        tableexists2.remove();
+    }catch{
+    }
+    try{
+        //ya existia la tabla...
         document.getElementById("files").value; //provocamos una excepcion
         var tableexists = document.getElementById("files");
         tableexists.remove();
     }catch{
-        //Creamos la tabla por primera vez...
     }
     let json = JSON.parse(response);
     fileList = json.msg
@@ -191,7 +214,7 @@ function printUserFiles( response ) {
                 let tokenUsuario = document.getElementById("tokenUsuario").value;
                 let username = document.getElementById("usernameLogin").value;
             
-                sendDataDownload(tokenUsuario, username, arrayIds[i]);
+                sendDataDownload(tokenUsuario, username, arrayIds[i], 0);
             });
             td2.appendChild(newButton);
 
@@ -206,7 +229,7 @@ function printUserFiles( response ) {
                 let tokenUsuario = document.getElementById("tokenUsuario").value;
                 let username = document.getElementById("usernameLogin").value;
             
-                sendDataDelete(tokenUsuario, username, arrayIds[i]);
+                sendDataDelete(tokenUsuario, username, arrayIds[i], 0);
             });
             td3.appendChild(newButton);
 
@@ -223,6 +246,7 @@ function printUserFiles( response ) {
                 
                 sendDataFile(tokenUsuario, username, arrayIds[i]);
                 document.getElementById("view_filename").value = arrayFiles[i];
+                getData(tokenUsuario, username, 1, arrayIds[i]);
             });
             td4.appendChild(newButton);
 
@@ -237,6 +261,110 @@ function printUserFiles( response ) {
             divAll.appendChild(table);
         }
         var currentDiv = document.getElementById("uploadFile" + '\n')
+        document.body.insertBefore(divAll, currentDiv)
+    } 
+}
+
+function printUserFilesVersiones( response ) {
+    try{
+        //ya existia la tabla...
+        document.getElementById("filesversiones").value; //provocamos una excepcion
+        var tableexists = document.getElementById("filesversiones");
+        tableexists.remove();
+    }catch{
+        //Creamos la tabla por primera vez...
+    }
+    let json = JSON.parse(response);
+    fileList = json.msg
+        
+    if(fileList != ""){
+        fileList = fileList.replaceAll(")", "")
+        fileList = fileList.replaceAll( "(", "")
+        arrayData = fileList.split(",")
+        var arrayFiles = []
+        var arrayIds = [ ]   
+        arrayData.forEach( function(entry){
+            if( isNaN(entry))
+                arrayFiles.push(entry)
+            else    
+                arrayIds.push(entry)    
+        } )
+
+        var divAll = document.createElement("div")
+        divAll.setAttribute( 'id'  , 'filesversiones');
+        
+        var table = document.createElement("table")
+        table.setAttribute( 'class' ,  'files');
+        table.setAttribute( 'align' ,  'center');
+        
+        var tr = document.createElement("tr");
+        var td1 = document.createElement("td");
+        var newText = document.createElement("label");
+        newText.setAttribute( 'class' , 'titleTable');
+        newText.textContent = "Nombre del archivo";
+        td1.appendChild(newText);
+
+        var td2 = document.createElement("td")
+        newText = document.createElement("label")
+        newText.setAttribute( 'class' , 'titleTable')
+        newText.textContent = "Descargar"
+        td2.appendChild(newText);
+
+        var td3 = document.createElement("td")
+        newText = document.createElement("label")
+        newText.setAttribute( 'class' , 'titleTable')
+        newText.textContent = "Eliminar"
+        td3.appendChild(newText);
+
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        tr.appendChild(td3);
+        table.appendChild(tr);
+        
+        for(let i = 0; i  < arrayFiles.length ; i++){
+            tr = document.createElement("tr");
+            td1 = document.createElement("td");
+
+            newText = document.createTextNode(arrayFiles[i])
+            td1.appendChild(newText);
+
+            td2 = document.createElement("td")
+
+            var newButton = document.createElement("img")
+            newButton.setAttribute( 'src'  ,  "img/upload.png");
+            newButton.setAttribute( 'width'  ,  "30px");
+            newButton.setAttribute( 'height'  ,  "30px");        
+            newButton.addEventListener("click", function () {
+                let tokenUsuario = document.getElementById("tokenUsuario").value;
+                let username = document.getElementById("usernameLogin").value;
+                
+                sendDataDownload(tokenUsuario, username, arrayIds[i], 1);
+            });
+            td2.appendChild(newButton);
+
+            
+            td3 = document.createElement("td")
+
+            var newButton = document.createElement("img")
+            newButton.setAttribute( 'src'  ,  "img/delete.png");
+            newButton.setAttribute( 'width'  ,  "30px");
+            newButton.setAttribute( 'height'  ,  "30px");        
+            newButton.addEventListener("click", function () {
+                let tokenUsuario = document.getElementById("tokenUsuario").value;
+                let username = document.getElementById("usernameLogin").value;
+            
+                sendDataDelete(tokenUsuario, username, arrayIds[i], 1);
+            });
+            td3.appendChild(newButton);
+            
+            tr.appendChild(td1);
+            tr.appendChild(td2);
+            tr.appendChild(td3);
+            
+            table.appendChild(tr);
+            divAll.appendChild(table);
+        }
+        var currentDiv = document.getElementById("view_table" + '\n')
         document.body.insertBefore(divAll, currentDiv)
     } 
 }
@@ -264,8 +392,16 @@ document.getElementById("view_buttonback")
     document.getElementById("view_File").style.display = "none";
     document.getElementById("uploadFile").style.display = "block";
     document.getElementById("files").style.display = "block";
-    
-    
+    try{
+        document.getElementById("filesversiones").value; //provocamos una excepcion
+        var tableexists = document.getElementById("files");
+        tableexists.remove();
+    }catch{
+        console.log("se ha producido una excepción");
+    }
+    let tokenUsuario = document.getElementById("tokenUsuario").value;
+    let username = document.getElementById("usernameLogin").value;
+    getData(tokenUsuario, username, 0, -1);
 })
 
 document.getElementById("view_save")

@@ -106,6 +106,9 @@ func (server *Server) upload(ctx *gin.Context) {
 func (server *Server) getNameFiles(ctx *gin.Context) {
 	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
 	username := ctx.Request.PostFormValue("username")
+	esversion := ctx.Request.PostFormValue("esversion")
+	idfile := ctx.Request.PostFormValue("idfile")
+
 	//Encriptamos el usuario
 	clavePublica := leerClavePublica()
 
@@ -118,9 +121,29 @@ func (server *Server) getNameFiles(ctx *gin.Context) {
 	//Antes de enviarlo convierto el contenido a base64
 	usernameCifrado := base64.StdEncoding.EncodeToString(usernameCifradoRSA)
 
+	esversionCifradoRSA, err := RsaEncrypt([]byte(esversion), []byte(clavePublica))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Antes de enviarlo convierto el contenido a base64
+	esversionCifrado := base64.StdEncoding.EncodeToString(esversionCifradoRSA)
+
+	idfileCifradoRSA, err := RsaEncrypt([]byte(idfile), []byte(clavePublica))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	//Antes de enviarlo convierto el contenido a base64
+	idfileCifrado := base64.StdEncoding.EncodeToString(idfileCifradoRSA)
+
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
 	bodyWriter.WriteField("username", usernameCifrado)
+	bodyWriter.WriteField("esversion", esversionCifrado)
+	bodyWriter.WriteField("idfile", idfileCifrado)
 	contentType := bodyWriter.FormDataContentType()
 	bodyWriter.Close()
 
@@ -155,6 +178,7 @@ func (server *Server) download(ctx *gin.Context) {
 	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
 	username := ctx.Request.PostFormValue("username")
 	idfile := ctx.Request.PostFormValue("idfile")
+	esversion := ctx.Request.PostFormValue("esversion")
 
 	clavePublica := leerClavePublica()
 
@@ -170,14 +194,22 @@ func (server *Server) download(ctx *gin.Context) {
 		return
 	}
 
+	esversionCifradoRSA, err := RsaEncrypt([]byte(esversion), []byte(clavePublica))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
 	//Antes de enviarlo convierto el contenido a base64
 	usernameCifrado := base64.StdEncoding.EncodeToString(usernameCifradoRSA)
 	idfileCifrado := base64.StdEncoding.EncodeToString(idfileCifradoRSA)
+	esversionCifrado := base64.StdEncoding.EncodeToString(esversionCifradoRSA)
 
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
 	bodyWriter.WriteField("username", usernameCifrado)
 	bodyWriter.WriteField("idfile", idfileCifrado)
+	bodyWriter.WriteField("esversion", esversionCifrado)
 	contentType := bodyWriter.FormDataContentType()
 	bodyWriter.Close()
 
@@ -223,13 +255,14 @@ func (server *Server) download(ctx *gin.Context) {
 	//ctx.Header("Cache-Control", "no-cache")
 	//ctx.File("temp-files/patata")
 
-	ctx.JSON(http.StatusOK, "Se ha descargado un archivo llamado "+filename)
+	ctx.JSON(http.StatusOK, "Se ha descargado un archivo llamado "+filename+" y se ha guardado en Descargas")
 }
 
 func (server *Server) delete(ctx *gin.Context) {
 	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
 	username := ctx.Request.PostFormValue("username")
 	idfile := ctx.Request.PostFormValue("idfile")
+	esversion := ctx.Request.PostFormValue("esversion")
 
 	clavePublica := leerClavePublica()
 
@@ -245,14 +278,22 @@ func (server *Server) delete(ctx *gin.Context) {
 		return
 	}
 
+	esversionCifradoRSA, err := RsaEncrypt([]byte(esversion), []byte(clavePublica))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
 	//Antes de enviarlo convierto el contenido a base64
 	usernameCifrado := base64.StdEncoding.EncodeToString(usernameCifradoRSA)
 	idfileCifrado := base64.StdEncoding.EncodeToString(idfileCifradoRSA)
+	esversionCifrado := base64.StdEncoding.EncodeToString(esversionCifradoRSA)
 
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
 	bodyWriter.WriteField("username", usernameCifrado)
 	bodyWriter.WriteField("idfile", idfileCifrado)
+	bodyWriter.WriteField("esversion", esversionCifrado)
 	contentType := bodyWriter.FormDataContentType()
 	bodyWriter.Close()
 
@@ -286,6 +327,7 @@ func (server *Server) getFileProperties(ctx *gin.Context) {
 	tokenUsuario := ctx.Request.PostFormValue("tokenUsuario")
 	username := ctx.Request.PostFormValue("username")
 	idfile := ctx.Request.PostFormValue("idfile")
+	var esversion string = "0"
 
 	clavePublica := leerClavePublica()
 
@@ -301,14 +343,21 @@ func (server *Server) getFileProperties(ctx *gin.Context) {
 		return
 	}
 
+	esversionCifradoRSA, err := RsaEncrypt([]byte(esversion), []byte(clavePublica))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
 	//Antes de enviarlo convierto el contenido a base64
 	usernameCifrado := base64.StdEncoding.EncodeToString(usernameCifradoRSA)
 	idfileCifrado := base64.StdEncoding.EncodeToString(idfileCifradoRSA)
+	esversionCifrado := base64.StdEncoding.EncodeToString(esversionCifradoRSA)
 
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)
 	bodyWriter.WriteField("username", usernameCifrado)
 	bodyWriter.WriteField("idfile", idfileCifrado)
+	bodyWriter.WriteField("esversion", esversionCifrado)
 	contentType := bodyWriter.FormDataContentType()
 	bodyWriter.Close()
 
@@ -332,6 +381,14 @@ func (server *Server) getFileProperties(ctx *gin.Context) {
 		return
 	}
 	defer resp.Body.Close()
+
+	//Eliminamos la carpeta y la volvemos a crear,,,
+	os.RemoveAll("temp-files/")
+	_, err = crearDirectorioSiNoExiste("temp-files")
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
 
 	filename := "archivo" + strconv.Itoa(time.Now().Nanosecond()) + strconv.Itoa(time.Now().Second())
 	file, err := os.Create("temp-files/" + filename) // crea el fichero de destino (servidor)
@@ -455,4 +512,18 @@ func (server *Server) updateComment(ctx *gin.Context) {
 	body, _ := ioutil.ReadAll(resp.Body)
 
 	ctx.JSON(http.StatusOK, string(body))
+}
+
+func crearDirectorioSiNoExiste(directorio string) (bool, error) {
+	var todoOk bool = false
+	var err error = nil
+	if _, err = os.Stat(directorio); os.IsNotExist(err) {
+		err = os.Mkdir(directorio, 0755)
+		if err != nil {
+			panic(err)
+		}
+		todoOk = true
+	}
+
+	return todoOk, err
 }

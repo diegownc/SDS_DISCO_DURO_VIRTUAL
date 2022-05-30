@@ -162,29 +162,65 @@ func ObtenerIdFolder(username string) int {
 	return idfolder
 }
 
-func RegistrarArchivo(filename string, comment string, idfolder int) bool {
+//Devuelve dos booleanos, el primero indica que esta todoOK y el segundo indica si se ha guardado una version
+func RegistrarArchivo(filename string, comment string, idfolder int) (bool, bool, int) {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 	db, err := sql.Open("postgres", psqlInfo)
 	checkError(err)
 	defer db.Close()
 
 	rows, err := db.Query("Select 1 from files where filename='" + filename + "' and idfolder =" + strconv.Itoa(idfolder))
-	fmt.Println(filename)
 	checkError(err)
 
 	if !rows.Next() {
+		//Nuevo archivo....
 		sqlStatement := `INSERT INTO files (filename, comment, idfolder) VALUES ($1, $2, $3)`
 		_, err = db.Exec(sqlStatement, filename, comment, idfolder)
 
 		if err != nil {
 			fmt.Println(err.Error())
-			return false
+			return false, false, -1
 		}
 	} else {
-		return false
+		//Han intentado meter un archivo que ya existe
+
+		idfile := obtenerIdByFileName(filename)
+
+		rows, err := db.Query("Select 1 from filesversion where idfile='" + idfile + "'")
+		checkError(err)
+		var nuevaVersion int
+
+		//Comprobamos si es la primera vez que se versiona el archivo....
+		if !rows.Next() {
+			nuevaVersion = 1
+			filename = filename + strconv.Itoa(nuevaVersion)
+			//Es la primera vez que versionamos...
+			sqlStatement := `INSERT INTO filesversion (filename, idfolder, idfile, version) VALUES ($1, $2, $3, $4)`
+			_, err = db.Exec(sqlStatement, filename, idfolder, idfile, 1)
+
+			if err != nil {
+				fmt.Println(err.Error())
+				return false, false, -1
+			}
+		} else {
+			//Es la segunda vez que versionamos...
+
+			//Obtenemos la nueva version del archivo..
+			nuevaVersion = obtenerVersionByIdfile(idfile)
+			filename = filename + strconv.Itoa(nuevaVersion)
+
+			sqlStatement := `INSERT INTO filesversion (filename, idfolder, idfile, version) VALUES ($1, $2, $3, $4)`
+			_, err = db.Exec(sqlStatement, filename, idfolder, idfile, nuevaVersion)
+
+			if err != nil {
+				fmt.Println(err.Error())
+				return false, false, -1
+			}
+		}
+		return true, true, nuevaVersion
 	}
 
-	return true
+	return true, false, -1
 }
 
 //Obtiene los filenames de la carpeta del usuario
@@ -219,6 +255,37 @@ func ObtenerArchivosUsuario(idfolder string) string {
 	return res
 }
 
+//Obtiene los filenames de la carpeta del usuario
+func ObtenerArchivosUsuarioVersiones(idfile string) string {
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
+	checkError(err)
+	defer db.Close()
+
+	rows, err := db.Query("Select filename, id from filesversion where idfile='" + idfile + "'")
+	checkError(err)
+
+	defer rows.Close()
+
+	var filenameDB string
+	var id int
+	var res string
+	for rows.Next() {
+		err := rows.Scan(&filenameDB, &id)
+		checkError(err)
+		// cada archivo conformará un conjunto de esta forma -> (filenameDB, idfile)
+		res = res + "(" + filenameDB + "," + strconv.Itoa(id) + "),"
+	}
+
+	//Quitamos la última coma ","
+	if len(res) > 0 {
+		last := len(res) - 1
+		res = res[:last]
+	}
+
+	return res
+}
+
 func ObtenerFileName(idfile string) string {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 	db, err := sql.Open("postgres", psqlInfo)
@@ -239,6 +306,86 @@ func ObtenerFileName(idfile string) string {
 	return filenameDB
 }
 
+func ObtenerFileNameVersion(idfile string) string {
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
+	checkError(err)
+	defer db.Close()
+
+	rows, err := db.Query("Select filename from filesversion where id=" + idfile)
+	checkError(err)
+	defer rows.Close()
+
+	var filenameDB string
+	if rows.Next() {
+		err := rows.Scan(&filenameDB)
+		checkError(err)
+	}
+
+	return filenameDB
+}
+
+func obtenerIdByFileName(filename string) string {
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
+	checkError(err)
+	defer db.Close()
+
+	rows, err := db.Query("Select idfile from files where filename='" + filename + "'")
+	checkError(err)
+
+	defer rows.Close()
+
+	var idfile string
+	if rows.Next() {
+		err := rows.Scan(&idfile)
+		checkError(err)
+	}
+
+	return idfile
+}
+
+func obtenerVersionByIdfile(idfile string) int {
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
+	checkError(err)
+	defer db.Close()
+
+	rows, err := db.Query("Select version from filesversion where idfile=" + idfile + " order by version desc")
+	checkError(err)
+
+	defer rows.Close()
+
+	var version int
+	if rows.Next() {
+		err := rows.Scan(&version)
+		checkError(err)
+	}
+
+	version = version + 1
+	return version
+}
+
+func ObtenerIdByFileName(filename string) string {
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
+	checkError(err)
+	defer db.Close()
+
+	rows, err := db.Query("Select idfile from files where filename='" + filename + "'")
+	checkError(err)
+
+	defer rows.Close()
+
+	var idfile string
+	if rows.Next() {
+		err := rows.Scan(&idfile)
+		checkError(err)
+	}
+
+	return idfile
+}
+
 func EliminarFileName(idfile string) bool {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 	db, err := sql.Open("postgres", psqlInfo)
@@ -246,6 +393,23 @@ func EliminarFileName(idfile string) bool {
 	defer db.Close()
 
 	sqlStatement := `DELETE FROM files where idfile=$1`
+	_, err = db.Exec(sqlStatement, idfile)
+
+	if err != nil {
+		fmt.Println(err.Error())
+		return false
+	}
+
+	return true
+}
+
+func EliminarFileNameVersion(idfile string) bool {
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlInfo)
+	checkError(err)
+	defer db.Close()
+
+	sqlStatement := `DELETE FROM filesversion where id=$1`
 	_, err = db.Exec(sqlStatement, idfile)
 
 	if err != nil {

@@ -84,19 +84,26 @@ func (server *Server) registrar(ctx *gin.Context) {
 	res := db.RegistroUsuario(string(usernameDescifrado), string(passwordDescifrado))
 
 	if res {
-		//Creamos la carpeta
-		res, err = crearDirectorioSiNoExiste("ArchivosUsuarios/" + strconv.Itoa(db.ObtenerIdFolder(string(usernameDescifrado))))
+		//Creamos la carpeta del cliente
+		_, err = crearDirectorioSiNoExiste("ArchivosUsuarios/" + strconv.Itoa(db.ObtenerIdFolder(string(usernameDescifrado))))
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, errorResponse(err))
 			return
-
-		} else {
-			rsp := registryResponse{
-				Result: res,
-				Msg:    "Registrado correctamente.",
-			}
-			ctx.JSON(http.StatusOK, rsp)
 		}
+
+		//Creamos la carpeta versiones...
+		res, err = crearDirectorioSiNoExiste("ArchivosUsuarios/" + strconv.Itoa(db.ObtenerIdFolder(string(usernameDescifrado))) + "/versiones")
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, errorResponse(err))
+			return
+		}
+
+		rsp := registryResponse{
+			Result: res,
+			Msg:    "Registrado correctamente.",
+		}
+		ctx.JSON(http.StatusOK, rsp)
+
 	} else {
 		rsp := registryResponse{
 			Result: res,
