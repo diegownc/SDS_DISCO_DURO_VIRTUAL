@@ -413,13 +413,17 @@ func (server *Server) getFileProperties(ctx *gin.Context) {
 
 	//Obtenemos el contenido....
 	var text string
-	fileContent, err := ioutil.ReadFile("temp-files/" + filename)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-	text = string(fileContent)
 
+	if int(fileSize) < 100000 {
+		fileContent, err := ioutil.ReadFile("temp-files/" + filename)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, errorResponse(err))
+			return
+		}
+		text = string(fileContent)
+	} else {
+		text = "El archivo es muy pesado y no se pueve previsualizar"
+	}
 	//Obtenemos el comentario del archivo...
 	bodyBuf2 := &bytes.Buffer{}
 	bodyWriter2 := multipart.NewWriter(bodyBuf2)
